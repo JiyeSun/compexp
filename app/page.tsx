@@ -28,7 +28,7 @@ export default function Home() {
   const [showChat, setShowChat] = useState<boolean>(false);
   const [opponentScore, setOpponentScore] = useState<number>(0);
   const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
-  const competitiveQuestions = [2,5,7,8,9,10,11,12,13];
+  const competitiveQuestions = [2,5,6,9,11];
   const [messages, setMessages] = useState<
     { sender: string; text: string }[]
   >([]);
