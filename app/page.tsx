@@ -167,14 +167,15 @@ export default function Home() {
           {/* System Label */}
           {/* Title */}
           <h1 className="text-2xl md:text-2xl font-semibold mb-6 leading-relaxed max-w-2xl mx-auto">
-            This is a performance test, try to complete as many matrices as possible in the shortest time. 
-            Your performance will be compared to the other participants.
+            This is a performance test. 
+            You will be paired with another participant, and your performance will be compared with theirs. 
           </h1>
 
           {/* Description */}
           <p className="text-gray-300 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
-            You can click the <span className="text-cyan-400 font-medium">ASSISTANT </span> 
-            button to ask the bot about any question you are stuck on. Click the button below to begin.
+            You will have 30 seconds to complete each matrix. Once either you or the other participant completes a matrix, the task will automatically proceed to the next one.
+            Try to complete as many matrices as possible.
+            Click the button below to begin.
           </p>
 
           {/* Begin Button */}
@@ -232,7 +233,7 @@ export default function Home() {
             Experiment completed.
           </h1>
           <p className="text-lg text-gray-400 mt-4">
-            Total time: <span className="text-gray-800 font-semibold">
+            Total time: <span className="text-cyan-400 font-semibold">
               {minutes}m {seconds}s
             </span>
           </p>
@@ -315,148 +316,8 @@ export default function Home() {
       <p className="text-2xl font-bold text-red-400">
         {opponentScore}
       </p>
-    </div>
-  
+    </div>  
   </div>  
-
-      <img
-        src={`/images/q${questions[current].id}.png`}
-        alt="question"
-        className="mb-6 max-w-xl"
-      />
-
-      <div className="grid grid-cols-6 gap-6">
-        {generateOptions(questions[current].id).map((option, index) => (
-          <img
-            key={index}
-            src={option}
-            alt="option"
-            onClick={() => handleAnswer(index)}
-            className={`w-24 h-24 object-contain transition
-              ${autoAnswered && index === questions[current].correct
-                ? "ring-4 ring-red-500 scale-110"
-                : "cursor-pointer hover:scale-105"
-              }`}
-          />
-        ))}
-      </div>
-      {/* Chat button */}
-
-<button
-  onClick={() => {
-    if (!showChat && messages.length === 0) {
-      setMessages([
-        {
-          sender: "bot",
-          text: "Hello, if you need help solving a question, just ask me. Tell me which question you are struggling with and let's solve it together. I can help you with up to 10 questions. For example, you can ask: 'Help me on Question 1.'",
-        },
-      ]);
-    }
-    setShowChat(!showChat);
-  }}
-  className="
-    fixed bottom-6 left-6
-    bg-black/80 backdrop-blur-md
-    text-cyan-400
-    px-6 py-3
-    rounded-2xl
-    border border-cyan-400
-    shadow-2xl
-    tracking-widest text-sm
-    hover:bg-cyan-400 hover:text-black
-    transition-all duration-300
-  "
->
-  ASSISTANT
-</button>
-
-{/* Chat box */}
-{showChat && (
-  <div className="fixed bottom-24 left-8 w-[480px] h-[560px] bg-white shadow-2xl rounded-3xl border border-gray-200 flex flex-col">
-
-    {/* Header */}
-    <div className="px-6 py-4 border-b flex justify-between items-center">
-      <div>
-        <p className="text-xs tracking-widest text-gray-400">
-          ASSISTANT
-        </p>
-      </div>
-
-      <button
-        onClick={() => setShowChat(false)}
-        className="text-gray-400 hover:text-black text-sm"
-      >
-        ✕
-      </button>
-    </div>
-
-    {/* Messages */}
-    <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-      {messages.map((msg, index) => (
-        <div
-          key={index}
-          className={`flex items-end gap-2 ${
-            msg.sender === "user"
-              ? "justify-end"
-              : "justify-start"
-          }`}
-        >
-          {/* Bot Avatar */}
-          {msg.sender === "bot" && (
-            <img
-              src="/images/bot.png"
-              alt="bot"
-              className="w-8 h-8 rounded-full"
-            />
-          )}
-
-          {/* Message Bubble */}
-          <div
-            className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${
-              msg.sender === "user"
-                ? "bg-gray-900 text-white"
-                : "bg-gray-100 text-gray-800"
-            }`}
-          >
-            {msg.text}
-          </div>
-
-          {/* User Avatar */}
-          {msg.sender === "user" && (
-            <img
-              src="/images/user.png"
-              alt="user"
-              className="w-8 h-8 rounded-full"
-            />
-          )}
-        </div>
-      ))}
-    </div>
-
-    {/* Input */}
-    <div className="border-t px-5 py-4 flex gap-3">
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        className="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
-        placeholder="Ask about a question..."
-      />
-      <button
-        onClick={sendMessage}
-        className="px-5 bg-gray-900 text-white rounded-xl text-sm hover:bg-black transition"
-      >
-        Send
-      </button>
-    </div>
-
-  </div>
-)}
-
-
-
-
-    </div>
   );
 }
 
