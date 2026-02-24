@@ -26,6 +26,9 @@ export default function Home() {
   const [experimentStartTime, setExperimentStartTime] = useState<number | null>(null);
   const [started, setStarted] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
+  const [opponentScore, setOpponentScore] = useState<number>(0);
+  const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
+  const competitiveQuestions = [2,5,7,8,9,10,11,12,13];
   const [messages, setMessages] = useState<
     { sender: string; text: string }[]
   >([]);
@@ -67,6 +70,33 @@ export default function Home() {
 
   return () => clearInterval(timer);
 }, [current, started]);
+  
+  useEffect(() => {
+    if (!started) return;
+    if (current >= questions.length) return;
+  
+    const questionNumber = questions[current].id;
+  
+    if (!competitiveQuestions.includes(questionNumber)) {
+      setAutoAnswered(false);
+      return;
+    }
+  
+    setAutoAnswered(false);
+  
+    const timeout = setTimeout(() => {
+      setOpponentScore(prev => prev + 1);
+      setAutoAnswered(true);
+  
+      setTimeout(() => {
+        setCurrent(prev => prev + 1);
+      }, 800);
+
+    }, 1000);
+
+    return () => clearTimeout(timeout);
+
+  }, [current, started]);
 
   function generateOptions(id: number) {
     return Array.from({ length: 6 }, (_, i) => 
@@ -75,10 +105,13 @@ export default function Home() {
   }
 
   function handleAnswer(index: number) {
-    if (index === questions[current].correct) {
-      setScore(score + 1);
-    }
-    setCurrent(current + 1);
+  if (autoAnswered) return;
+
+  if (index === questions[current].correct) {
+    setScore(prev => prev + 1);
+  }
+
+  setCurrent(prev => prev + 1);
   }
 
   function sendMessage() {
@@ -204,6 +237,9 @@ export default function Home() {
           <p className="text-xl text-gray-300">
             Your score: <span className="text-cyan-400 font-semibold">{score}</span>
           </p>
+          <p className="text-xl text-gray-300 mt-4">
+            Opponent score: <span className="text-red-400 font-semibold">{opponentScore}</span>
+          </p>
 
         </div>
       </div>
@@ -245,11 +281,17 @@ export default function Home() {
       <p className="text-xs tracking-widest text-cyan-400">WRONG</p>
       <p className="text-2xl font-bold text-red-400">{current-score}</p>
     </div>
-
-    {/* SCORE */}
+    
+    {/* USER */}
     <div className="text-center">
-      <p className="text-xs tracking-widest text-cyan-400">SCORE</p>
+      <p className="text-xs tracking-widest text-cyan-400">YOUR SCORE</p>
       <p className="text-2xl font-bold text-green-400">{score}</p>
+    </div>
+
+    {/* OPPONENT */}
+    <div className="text-center">
+      <p className="text-xs tracking-widest text-cyan-400">OPPONENT SCORE</p>
+      <p className="text-2xl font-bold text-red-400">{opponentScore}</p>
     </div>
 
     {/* TIME */}
@@ -282,7 +324,11 @@ export default function Home() {
             src={option}
             alt="option"
             onClick={() => handleAnswer(index)}
-            className="w-24 h-24 object-contain cursor-pointer hover:scale-105 transition"
+            className={`w-24 h-24 object-contain transition
+              ${autoAnswered && index === questions[current].correct
+                ? "ring-4 ring-red-500 scale-110"
+                : "cursor-pointer hover:scale-105"
+              }`}
           />
         ))}
       </div>
