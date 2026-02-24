@@ -143,12 +143,14 @@ export default function Home() {
           {/* Title */}
           <h1 className="text-2xl md:text-2xl font-semibold mb-6 leading-relaxed max-w-2xl mx-auto">
             This is a performance test. 
-            You will be paired with another participant, and your performance will be compared with theirs.
+            You will be paired with an AI model that is currently being trained and evaluated. 
+            Your performance will be compared with the AI’s performance in order to benchmark human and algorithmic reasoning under time constraints.
+            Your participation helps us better calibrate the model’s performance relative to human participants.
           </h1>
 
           {/* Description */}
           <p className="text-gray-300 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
-            You will have 30 seconds to complete each matrix. Once either you or the other participant completes a matrix, the task will automatically proceed to the next one.
+            You will have 30 seconds to complete each matrix. Once either you or the AI completes a matrix, the task will automatically proceed to the next one.
             Click the button below to begin.
           </p>
 
@@ -215,7 +217,7 @@ export default function Home() {
             Your score: <span className="text-cyan-400 font-semibold">{score}</span>
           </p>
           <p className="text-xl text-gray-300">
-            Opponent score: <span className="text-red-400 font-semibold">{opponentScore}</span>
+            AI's score: <span className="text-red-400 font-semibold">{opponentScore}</span>
           </p>
 
         </div>
@@ -279,7 +281,7 @@ export default function Home() {
   
     <div className="text-center">
       <p className="text-xs tracking-widest text-cyan-400">
-        OPPONENT
+        AI's Score
       </p>
       <p className="text-2xl font-bold text-red-400">
         {opponentScore}
@@ -311,7 +313,6 @@ export default function Home() {
               }`}
           />
         
-          {/* 错误时显示红叉 */}
           {showWrongMark && selectedIndex === index && (
             <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
               <span className="text-red-600 text-7xl font-bold">✕</span>
