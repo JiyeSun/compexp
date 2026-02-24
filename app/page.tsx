@@ -25,14 +25,10 @@ export default function Home() {
   const [totalTime, setTotalTime] = useState<number>(0);
   const [experimentStartTime, setExperimentStartTime] = useState<number | null>(null);
   const [started, setStarted] = useState<boolean>(false);
-  const [showChat, setShowChat] = useState<boolean>(false);
   const [opponentScore, setOpponentScore] = useState<number>(0);
   const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
   const competitiveQuestions = [2,5,6,9,11];
-  const [messages, setMessages] = useState<
-    { sender: string; text: string }[]
-  >([]);
-  const [input, setInput] = useState<string>("");
+
 
   useEffect(() => {
   if (!started || current >= questions.length) return;
@@ -116,39 +112,6 @@ export default function Home() {
   setCurrent(prev => prev + 1);
   }
 
-  function sendMessage() {
-    if (!input.trim()) return;
-
-    const userMessage = { sender: "user", text: input };
-
-    const botReply = {
-      sender: "bot",
-      text: generateReply(input),
-    };
-
-    setMessages([...messages, userMessage, botReply]);
-    setInput("");
-  }
-
-  function generateReply(message: string) {
-  const lower = message.toLowerCase();
-  const match = lower.match(/question\s*(\d+)/);
-
-  if (lower.includes("help") && match) {
-    const questionNumber = parseInt(match[1], 10);
-
-    const question = questions.find(q => q.id === questionNumber);
-
-    if (!question) {
-      return "I couldn't find that question number.";
-    }
-    const letter = String.fromCharCode(65 + question.correct);
-    return `The correct answer for question ${questionNumber} is option ${letter}.`;
-  }
-
-  return "Please type: Help me on question X 😊";
-}
-
   if (!started) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center px-6">
@@ -167,15 +130,14 @@ export default function Home() {
           {/* System Label */}
           {/* Title */}
           <h1 className="text-2xl md:text-2xl font-semibold mb-6 leading-relaxed max-w-2xl mx-auto">
-            This is a performance test. 
-            You will be paired with another participant, and your performance will be compared with theirs. 
+            This is a performance test, try to complete as many matrices as possible in the shortest time. 
+            Your performance will be compared to the other participants.
           </h1>
 
           {/* Description */}
           <p className="text-gray-300 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
-            You will have 30 seconds to complete each matrix. Once either you or the other participant completes a matrix, the task will automatically proceed to the next one.
-            Try to complete as many matrices as possible.
-            Click the button below to begin.
+            You can click the <span className="text-cyan-400 font-medium">ASSISTANT </span> 
+            button to ask the bot about any question you are stuck on. Click the button below to begin.
           </p>
 
           {/* Begin Button */}
@@ -233,7 +195,7 @@ export default function Home() {
             Experiment completed.
           </h1>
           <p className="text-lg text-gray-400 mt-4">
-            Total time: <span className="text-cyan-400 font-semibold">
+            Total time: <span className="text-gray-800 font-semibold">
               {minutes}m {seconds}s
             </span>
           </p>
@@ -316,9 +278,35 @@ export default function Home() {
       <p className="text-2xl font-bold text-red-400">
         {opponentScore}
       </p>
-    </div>  
+    </div>
+  
   </div>  
+
+      <img
+        src={`/images/q${questions[current].id}.png`}
+        alt="question"
+        className="mb-6 max-w-xl"
+      />
+
+      <div className="grid grid-cols-6 gap-6">
+        {generateOptions(questions[current].id).map((option, index) => (
+          <img
+            key={index}
+            src={option}
+            alt="option"
+            onClick={() => handleAnswer(index)}
+            className={`w-24 h-24 object-contain transition
+              ${autoAnswered && index === questions[current].correct
+                ? "ring-4 ring-red-500 scale-110"
+                : "cursor-pointer hover:scale-105"
+              }`}
+          />
+        ))}
+      </div>
+
+
+
+    </div>
   );
 }
-
 
