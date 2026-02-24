@@ -130,14 +130,14 @@ export default function Home() {
           {/* System Label */}
           {/* Title */}
           <h1 className="text-2xl md:text-2xl font-semibold mb-6 leading-relaxed max-w-2xl mx-auto">
-            This is a performance test, try to complete as many matrices as possible in the shortest time. 
-            Your performance will be compared to the other participants.
+            This is a performance test. 
+            You will be paired with another participant, and your performance will be compared with theirs.
           </h1>
 
           {/* Description */}
           <p className="text-gray-300 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
-            You can click the <span className="text-cyan-400 font-medium">ASSISTANT </span> 
-            button to ask the bot about any question you are stuck on. Click the button below to begin.
+            You will have 30 seconds to complete each matrix. Once either you or the other participant completes a matrix, the task will automatically proceed to the next one.
+            Click the button below to begin.
           </p>
 
           {/* Begin Button */}
