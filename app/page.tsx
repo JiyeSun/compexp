@@ -170,7 +170,7 @@ export default function Home() {
           </h1>
 
           {/* Description */}
-          <p className="text-gray-300 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
+          <p className="text-gray-800 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
             You can click the <span className="text-cyan-400 font-medium">ASSISTANT </span> 
             button to ask the bot about any question you are stuck on. Click the button below to begin.
           </p>
@@ -230,12 +230,12 @@ export default function Home() {
             Experiment completed.
           </h1>
           <p className="text-lg text-gray-400 mt-4">
-            Total time: <span className="text-cyan-400 font-semibold">
+            Total time: <span className="text-gray-800 font-semibold">
               {minutes}m {seconds}s
             </span>
           </p>
           <p className="text-xl text-gray-300">
-            Your score: <span className="text-cyan-400 font-semibold">{score}</span>
+            Your score: <span className="text-gray-800 font-semibold">{score}</span>
           </p>
           <p className="text-xl text-gray-300 mt-4">
             Opponent score: <span className="text-red-400 font-semibold">{opponentScore}</span>
