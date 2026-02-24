@@ -142,15 +142,15 @@ export default function Home() {
           {/* System Label */}
           {/* Title */}
           <h1 className="text-2xl md:text-2xl font-semibold mb-6 leading-relaxed max-w-2xl mx-auto">
-            This is a performance test. 
-            You will be paired with an AI model that is currently being trained and evaluated. 
+            This is a 14-question reasoning test.
+            You will be paired with an AI model that is currently being trained and evaluated.
             Your performance will be compared with the AI’s performance in order to benchmark human and algorithmic reasoning under time constraints.
-            Your participation helps us better calibrate the model’s performance relative to human participants.
           </h1>
 
           {/* Description */}
           <p className="text-gray-300 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
-            You will have 30 seconds to complete each matrix. Once either you or the AI completes a matrix, the task will automatically proceed to the next one.
+            Your participation helps us better calibrate the model’s performance relative to human participants.
+            You will have 30 seconds to complete each matrix. However, once either you or the AI completes a matrix, the task will automatically proceed to the next one.
             Click the button below to begin.
           </p>
 
