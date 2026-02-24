@@ -84,15 +84,17 @@ export default function Home() {
   
     setAutoAnswered(false);
   
+    const reactionTime = 800 + Math.random() * 800;
+  
     const timeout = setTimeout(() => {
       setOpponentScore(prev => prev + 1);
       setAutoAnswered(true);
   
       setTimeout(() => {
         setCurrent(prev => prev + 1);
-      }, 800);
-
-    }, 1000);
+      }, 1500);
+  
+    }, reactionTime);
 
     return () => clearTimeout(timeout);
 
