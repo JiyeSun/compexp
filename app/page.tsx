@@ -229,15 +229,15 @@ export default function Home() {
           <h1 className="text-3xl font-semibold mb-6 tracking-wide">
             Experiment completed.
           </h1>
-          <p className="text-lg text-gray-400 mt-4">
+          <p className="text-lg text-gray-800 mt-4">
             Total time: <span className="text-gray-800 font-semibold">
               {minutes}m {seconds}s
             </span>
           </p>
-          <p className="text-xl text-gray-300">
-            Your score: <span className="text-gray-800 font-semibold">{score}</span>
+          <p className="text-xl text-gray-800">
+            Your score: <span className="text-cyan-400 font-semibold">{score}</span>
           </p>
-          <p className="text-xl text-gray-300 mt-4">
+          <p className="text-xl text-gray-800 mt-4">
             Opponent score: <span className="text-red-400 font-semibold">{opponentScore}</span>
           </p>
 
