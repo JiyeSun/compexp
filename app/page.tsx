@@ -151,14 +151,14 @@ export default function Home() {
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
 
         <div className="
-          bg-white
-          border border-gray-200
-          text-gray-800
+          bg-black/70 backdrop-blur-xl
+          border border-cyan-400
+          text-white
           rounded-3xl
-          shadow-lg
+          shadow-[0_0_40px_rgba(0,255,255,0.2)]
           max-w-2xl
           p-12
           text-center
@@ -172,7 +172,7 @@ export default function Home() {
           </h1>
 
           {/* Description */}
-          <p className="text-gray-800 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
+          <p className="text-gray-300 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
             You can click the <span className="text-cyan-400 font-medium">ASSISTANT </span> 
             button to ask the bot about any question you are stuck on. Click the button below to begin.
           </p>
@@ -185,11 +185,11 @@ export default function Home() {
             }}
             className="
               px-10 py-4
-              bg-white/80 backdrop-blur-md
-              text-gray-800
+              bg-black/80 backdrop-blur-md
+              text-cyan-400
               rounded-2xl
-              border border-gray-200
-              shadow-lg
+              border border-cyan-400
+              shadow-[0_0_20px_rgba(0,255,255,0.3)]
               tracking-widest
               text-lg
               hover:bg-cyan-400 hover:text-black
@@ -214,16 +214,16 @@ export default function Home() {
     const formattedSeconds = seconds.toString().padStart(2, "0");
 
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
 
         <div className="
-          bg-white
-          border border-gray-200
-          text-gray-800
+          bg-black/70 backdrop-blur-xl
+          border border-cyan-400
+          text-white
           rounded-3xl
-          shadow-lg
-          max-w-2xl
-          p-12
+          shadow-[0_0_40px_rgba(0,255,255,0.2)]
+          max-w-xl
+          px-16 py-14
           text-center
         ">
 
@@ -231,15 +231,15 @@ export default function Home() {
           <h1 className="text-3xl font-semibold mb-6 tracking-wide">
             Experiment completed.
           </h1>
-          <p className="text-lg text-gray-800 mt-4">
+          <p className="text-lg text-gray-400 mt-4">
             Total time: <span className="text-gray-800 font-semibold">
               {minutes}m {seconds}s
             </span>
           </p>
-          <p className="text-xl text-gray-800">
+          <p className="text-xl text-gray-300">
             Your score: <span className="text-cyan-400 font-semibold">{score}</span>
           </p>
-          <p className="text-xl text-gray-800">
+          <p className="text-xl text-gray-300">
             Opponent score: <span className="text-red-400 font-semibold">{opponentScore}</span>
           </p>
 
