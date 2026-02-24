@@ -237,7 +237,7 @@ export default function Home() {
           <p className="text-xl text-gray-800">
             Your score: <span className="text-cyan-400 font-semibold">{score}</span>
           </p>
-          <p className="text-xl text-gray-800 mt-4">
+          <p className="text-xl text-gray-800">
             Opponent score: <span className="text-red-400 font-semibold">{opponentScore}</span>
           </p>
 
@@ -304,10 +304,10 @@ export default function Home() {
     bg-black/80 backdrop-blur-md 
     text-white px-6 py-3 
     rounded-2xl shadow-2xl 
-    border border-red-400">
+    border border-cyan-400">
   
     <div className="text-center">
-      <p className="text-xs tracking-widest text-red-400">
+      <p className="text-xs tracking-widest text-cyan-400">
         OPPONENT
       </p>
       <p className="text-2xl font-bold text-red-400">
