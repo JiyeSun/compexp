@@ -288,12 +288,6 @@ export default function Home() {
       <p className="text-2xl font-bold text-green-400">{score}</p>
     </div>
 
-    {/* OPPONENT */}
-    <div className="text-center">
-      <p className="text-xs tracking-widest text-cyan-400">OPPONENT SCORE</p>
-      <p className="text-2xl font-bold text-red-400">{opponentScore}</p>
-    </div>
-
     {/* TIME */}
     <div className="text-center">
       <p className="text-xs tracking-widest text-cyan-400">TIME</p>
@@ -303,14 +297,26 @@ export default function Home() {
         {timeLeft}s
       </p>
     </div>
-
-    {/* DONE */}
+  </div>
+      
+  {/* OPPONENT SCOREBOARD */}
+  <div className="absolute top-28 right-4 
+    bg-black/80 backdrop-blur-md 
+    text-white px-6 py-3 
+    rounded-2xl shadow-2xl 
+    border border-red-400">
+  
     <div className="text-center">
-      <p className="text-xs tracking-widest text-cyan-400">DONE</p>
-      <p className="text-2xl font-bold">{current}</p>
+      <p className="text-xs tracking-widest text-red-400">
+        OPPONENT
+      </p>
+      <p className="text-2xl font-bold text-red-400">
+        {opponentScore}
+      </p>
     </div>
+  
+  </div>  
 
-</div>
       <img
         src={`/images/q${questions[current].id}.png`}
         alt="question"
