@@ -252,12 +252,6 @@ export default function Home() {
   <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md 
     text-white px-6 py-3 rounded-2xl shadow-2xl 
     flex gap-8 items-center border border-cyan-400">
-
-    {/* WRONG */}
-    <div className="text-center">
-      <p className="text-xs tracking-widest text-cyan-400">WRONG</p>
-      <p className="text-2xl font-bold text-red-400">{Math.max(0, current - score)}</p>
-    </div>
     
     {/* USER */}
     <div className="text-center">
