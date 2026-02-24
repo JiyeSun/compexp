@@ -149,14 +149,14 @@ export default function Home() {
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
 
         <div className="
-          bg-black/70 backdrop-blur-xl
-          border border-cyan-400
-          text-white
+          bg-white
+          border border-gray-200
+          text-gray-800
           rounded-3xl
-          shadow-[0_0_40px_rgba(0,255,255,0.2)]
+          shadow-lg
           max-w-2xl
           p-12
           text-center
@@ -183,11 +183,11 @@ export default function Home() {
             }}
             className="
               px-10 py-4
-              bg-black/80 backdrop-blur-md
-              text-cyan-400
+              bg-white/80 backdrop-blur-md
+              text-gray-800
               rounded-2xl
-              border border-cyan-400
-              shadow-[0_0_20px_rgba(0,255,255,0.3)]
+              border border-gray-200
+              shadow-lg
               tracking-widest
               text-lg
               hover:bg-cyan-400 hover:text-black
@@ -212,16 +212,16 @@ export default function Home() {
     const formattedSeconds = seconds.toString().padStart(2, "0");
 
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
 
         <div className="
-          bg-black/70 backdrop-blur-xl
-          border border-cyan-400
-          text-white
+          bg-white
+          border border-gray-200
+          text-gray-800
           rounded-3xl
-          shadow-[0_0_40px_rgba(0,255,255,0.2)]
-          max-w-xl
-          px-16 py-14
+          shadow-lg
+          max-w-2xl
+          p-12
           text-center
         ">
 
