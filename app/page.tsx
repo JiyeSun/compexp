@@ -27,9 +27,11 @@ export default function Home() {
   const [started, setStarted] = useState<boolean>(false);
   const [opponentScore, setOpponentScore] = useState<number>(0);
   const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
-  const competitiveQuestions = [2,5,6,9,11];
+  const competitiveQuestions = [1,2,3,4,5,6,9,11];
+  const wrongAIQuestions = [1,3,4];
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [showWrongMark, setShowWrongMark] = useState<boolean>(false);
+  const [aiAnswerIndex, setAiAnswerIndex] = useState<number | null>(null);
 
 
   useEffect(() => {
@@ -82,20 +84,28 @@ export default function Home() {
   
     setAutoAnswered(false);
   
-    const reactionTime = 800 + Math.random() * 800;
-  
+    const reactionTime = 2000 + Math.random() * 2000;
     const timeout = setTimeout(() => {
-      setOpponentScore(prev => prev + 1);
+
+      const isWrong = wrongAIQuestions.includes(questionNumber);
+    
+      if (isWrong) {
+        const wrongIndex = (questions[current].correct + 1) % 6;
+        setAiAnswerIndex(wrongIndex);
+      } else {
+        setAiAnswerIndex(questions[current].correct);
+        setOpponentScore(prev => prev + 1);
+      }
+    
       setAutoAnswered(true);
-  
+    
       setTimeout(() => {
         setCurrent(prev => prev + 1);
-      }, 1500);
-  
+      }, 1000);
+    
     }, reactionTime);
 
     return () => clearTimeout(timeout);
-
   }, [current, started]);
 
   function generateOptions(id: number) {
@@ -304,7 +314,7 @@ export default function Home() {
             alt="option"
             onClick={() => handleAnswer(index)}
             className={`w-24 h-24 object-contain transition
-              ${autoAnswered && index === questions[current].correct
+              ${autoAnswered && index === aiAnswerIndex
                 ? "ring-4 ring-red-500 scale-110"
                 : ""}
               ${selectedIndex === index
