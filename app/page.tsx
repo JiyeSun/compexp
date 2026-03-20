@@ -84,7 +84,7 @@ export default function Home() {
   
     setAutoAnswered(false);
   
-    const reactionTime = 2000 + Math.random() * 2000;
+    const reactionTime = 4000 + Math.random() * 2000;
     const timeout = setTimeout(() => {
       const isWrong = wrongAIQuestions.includes(questionNumber);
       if (isWrong) {
