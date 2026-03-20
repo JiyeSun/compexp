@@ -344,7 +344,7 @@ export default function Home() {
             {autoAnswered &&
               index === aiAnswerIndex &&
               aiAnswerIndex !== questions[current].correct && (
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
                   <span className="text-red-600 text-7xl font-bold">✕</span>
                 </div>
             )}
