@@ -165,7 +165,7 @@ export default function Home() {
           </h1>
 
           {/* Description */}
-          <p className="text-gray-300 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
+          <p className="text-gray-600 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
             You will have 30 seconds to complete each matrix. However, once either you or the AI completes a matrix, the task will automatically proceed to the next one.
             Click the button below to begin.
           </p>
@@ -224,15 +224,15 @@ export default function Home() {
           <h1 className="text-3xl font-semibold mb-6 tracking-wide">
             Experiment completed.
           </h1>
-          <p className="text-lg text-gray-400 mt-4">
+          <p className="text-lg text-gray-700 mt-4">
             Total time: <span className="text-cyan-400 font-semibold">
               {minutes}m {seconds}s
             </span>
           </p>
-          <p className="text-xl text-gray-300">
+          <p className="text-xl text-gray-600">
             Your score: <span className="text-cyan-400 font-semibold">{score}</span>
           </p>
-          <p className="text-xl text-gray-300">
+          <p className="text-xl text-gray-600">
             AI's score: <span className="text-red-400 font-semibold">{opponentScore}</span>
           </p>
 
@@ -242,7 +242,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center relative">
+    <div className="h-screen flex flex-col items-center justify-center relative font-sans">
   
   {/* QUESTION HUD */}
   <div className="absolute top-4 left-4 
@@ -257,7 +257,7 @@ export default function Home() {
       </p>
       <p className="text-2xl font-bold">
         {current + 1}
-        <span className="text-sm text-gray-300 ml-2">
+        <span className="text-sm text-gray-600 ml-2">
           / {questions.length}
         </span>
       </p>
