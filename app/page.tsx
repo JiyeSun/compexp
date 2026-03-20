@@ -86,7 +86,6 @@ export default function Home() {
   
     const reactionTime = 2000 + Math.random() * 2000;
     const timeout = setTimeout(() => {
-
       const isWrong = wrongAIQuestions.includes(questionNumber);
     
       if (isWrong) {
@@ -99,9 +98,12 @@ export default function Home() {
     
       setAutoAnswered(true);
     
-      setTimeout(() => {
-        setCurrent(prev => prev + 1);
-      }, 1000);
+      // 只在AI答对时跳题
+      if (!isWrong) {
+        setTimeout(() => {
+          setCurrent(prev => prev + 1);
+        }, 800);
+      }
     
     }, reactionTime);
 
@@ -128,11 +130,13 @@ export default function Home() {
   } else {
     setShowWrongMark(true);
   }
-    
   setTimeout(() => {
     setSelectedIndex(null);
     setShowWrongMark(false);
-    setCurrent(prev => prev + 1);
+  
+    if (isCorrect) {
+      setCurrent(prev => prev + 1);
+    }
   }, 1500);
 }
 
