@@ -89,7 +89,7 @@ export default function Home() {
       return;
     }
   useEffect(() => {
-    if (!started) {
+    if (!showCover && !started) {
       setShowStartButton(false);
   
       const timer = setTimeout(() => {
@@ -98,7 +98,7 @@ export default function Home() {
   
       return () => clearTimeout(timer);
     }
-  }, [started]);
+  }, [showCover, started]);
   
     setAutoAnswered(false);
   
