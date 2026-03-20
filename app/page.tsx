@@ -206,7 +206,7 @@ export default function Home() {
           {/* System Label */}
           {/* Title */}
          <div className="text-2xl font-semibold mb-6 leading-relaxed text-center">
-          <div className="text-4xl font-bold mb-4">
+          <div className="text-3xl font-bold mb-4">
             <p>14 Matrix Problems.</p>
             <p>You VS AI.</p>
           </div>
@@ -214,7 +214,7 @@ export default function Home() {
             <p>⏱ 30 seconds per question</p>
             <p>⚔️ First to answer moves on</p>
           </div>
-          <p className="mt-6 text-cyan-400">Are you ready?</p>
+          <p className="mt-6 text-cyan-400"></p>
         </div>
 
           {/* Description */}
