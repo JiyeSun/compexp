@@ -34,6 +34,7 @@ export default function Home() {
   const [aiAnswerIndex, setAiAnswerIndex] = useState<number | null>(null);
   const [showCover, setShowCover] = useState(true);
   const [showStartButton, setShowStartButton] = useState(false);
+  const [progress, setProgress] = useState(0);
 
 
   useEffect(() => {
@@ -151,11 +152,33 @@ export default function Home() {
         <div className="text-white text-center">
           <h1 className="text-4xl font-bold mb-8">
             AI Reasoning Challenge
-            You vs an evolving AI system.
+            <br />
+            <span className="text-cyan-400 text-xl">
+              You vs an evolving AI system
+            </span>
           </h1>
   
           <button
-            onClick={() => setShowCover(false)}
+            onClick={() => {
+              setShowCover(false);
+            
+              setShowStartButton(false);
+              setProgress(0); // 👈 新增
+            
+              let start = Date.now();
+            
+              const interval = setInterval(() => {
+                const elapsed = Date.now() - start;
+                const percent = Math.min(elapsed / 2000, 1);
+            
+                setProgress(percent);
+            
+                if (percent === 1) {
+                  clearInterval(interval);
+                  setShowStartButton(true);
+                }
+              }, 16);
+            }}
             className="px-10 py-4 border border-cyan-400 text-cyan-400 rounded-2xl
             hover:bg-cyan-400 hover:text-black transition"
           >
@@ -182,16 +205,18 @@ export default function Home() {
 
           {/* System Label */}
           {/* Title */}
-          <h1 className="text-2xl md:text-2xl font-semibold mb-6 leading-relaxed max-w-2xl mx-auto">
-            14 Challenges.
-            You vs AI.
-            
-            ⏱ 30 seconds per question  
-            ⚔️ First to answer moves on  
-            🧠 Beat the AI. Prove your reasoning.
-            
-            Are you ready?
-          </h1>
+          <div className="text-2xl font-semibold mb-6 leading-relaxed text-center">
+            <p>14 Challenges.</p>
+            <p>You vs AI.</p>
+          
+            <div className="mt-4 space-y-1">
+              <p>⏱ 30 seconds per question</p>
+              <p>⚔️ First to answer moves on</p>
+              <p>🧠 Beat the AI. Prove your reasoning.</p>
+            </div>
+          
+            <p className="mt-6 text-cyan-400">Are you ready?</p>
+          </div>
 
           {/* Description */}
           <p className="text-gray-600 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
