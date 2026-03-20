@@ -19,22 +19,20 @@ const questions = [
 ];
 
 export default function Home() {
-  const [current, setCurrent] = useState(0);
-  const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(30);
-  const [totalTime, setTotalTime] = useState(0);
+  const [current, setCurrent] = useState<number>(0);
+  const [score, setScore] = useState<number>(0);
+  const [timeLeft, setTimeLeft] = useState<number>(30);
+  const [totalTime, setTotalTime] = useState<number>(0);
   const [experimentStartTime, setExperimentStartTime] = useState<number | null>(null);
-  const [started, setStarted] = useState(false);
-  const [opponentScore, setOpponentScore] = useState(0);
-  const [autoAnswered, setAutoAnswered] = useState(false);
+  const [started, setStarted] = useState<boolean>(false);
+  const [opponentScore, setOpponentScore] = useState<number>(0);
+  const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
   const competitiveQuestions = [1,2,3,4,5,6,9,11];
   const wrongAIQuestions = [1,3,4];
-
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [showWrongMark, setShowWrongMark] = useState(false);
+  const [showWrongMark, setShowWrongMark] = useState<boolean>(false);
   const [aiAnswerIndex, setAiAnswerIndex] = useState<number | null>(null);
 
-  // total time
   useEffect(() => {
     if (!started || current >= questions.length) return;
 
@@ -47,14 +45,13 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [started, experimentStartTime, current]);
 
-  // countdown
   useEffect(() => {
     if (!started) return;
 
     setTimeLeft(30);
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
           setCurrent(prevQ => prevQ + 1);
@@ -67,7 +64,6 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [current, started]);
 
-  // AI behavior
   useEffect(() => {
     if (!started || current >= questions.length) return;
 
@@ -90,7 +86,6 @@ export default function Home() {
         setAiAnswerIndex(wrongIndex);
         setAutoAnswered(true);
 
-        // allow retry
         setTimeout(() => {
           setAutoAnswered(false);
           setAiAnswerIndex(null);
@@ -109,6 +104,10 @@ export default function Home() {
 
     return () => clearTimeout(timeout);
   }, [current, started]);
+
+  function generateOptions(id: number) {
+    return Array.from({ length: 6 }, (_, i) => `/images/q${id}_a${i + 1}.png`);
+  }
 
   function handleAnswer(index: number) {
     if (autoAnswered && aiAnswerIndex === questions[current].correct) return;
@@ -133,35 +132,39 @@ export default function Home() {
     }, 1500);
   }
 
-  function generateOptions(id: number) {
-    return Array.from({ length: 6 }, (_, i) =>
-      `/images/q${id}_a${i + 1}.png`
-    );
-  }
-
   if (!started) {
     return (
-      <div className="min-h-screen bg-black text-white font-sans flex items-center justify-center">
-        <button
-          onClick={() => {
-            setStarted(true);
-            setExperimentStartTime(Date.now());
-          }}
-          className="px-10 py-4 border border-cyan-400 text-cyan-400 rounded-xl"
-        >
-          BEGIN
-        </button>
+      <div className="min-h-screen bg-black text-white font-sans flex items-center justify-center px-6">
+
+        <div className="bg-black border border-cyan-400 rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-2xl p-12 text-center">
+
+          <h1 className="text-2xl font-semibold mb-6 leading-relaxed">
+            This is a 14-question reasoning test.
+          </h1>
+
+          <p className="text-gray-200 mb-8 text-lg">
+            Click the button below to begin.
+          </p>
+
+          <button
+            onClick={() => {
+              setStarted(true);
+              setExperimentStartTime(Date.now());
+            }}
+            className="px-10 py-4 bg-black text-cyan-400 rounded-2xl border border-cyan-400 hover:bg-cyan-400 hover:text-black transition"
+          >
+            BEGIN
+          </button>
+
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-black text-white font-sans flex flex-col items-center justify-center">
+    <div className="h-screen bg-black text-white font-sans flex flex-col items-center justify-center relative">
 
-      <img
-        src={`/images/q${questions[current].id}.png`}
-        className="mb-6 max-w-xl"
-      />
+      <img src={`/images/q${questions[current].id}.png`} className="mb-6 max-w-xl" />
 
       <div className="grid grid-cols-6 gap-6">
         {generateOptions(questions[current].id).map((option, index) => (
@@ -170,38 +173,26 @@ export default function Home() {
             <img
               src={option}
               onClick={() => handleAnswer(index)}
-              className={`w-24 h-24 object-contain
+              className={`w-24 h-24
                 ${autoAnswered && index === aiAnswerIndex ? "ring-4 ring-red-500" : ""}
                 ${selectedIndex === index ? "ring-4 ring-cyan-400" : ""}
               `}
             />
 
-            {/* Human wrong */}
             {selectedIndex === index && showWrongMark && (
-              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
-                ✕
-              </div>
+              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">✕</div>
             )}
 
-            {/* Human correct */}
             {selectedIndex === index && !showWrongMark && index === questions[current].correct && (
-              <div className="absolute inset-0 flex items-center justify-center text-green-500 text-5xl">
-                ✓
-              </div>
+              <div className="absolute inset-0 flex items-center justify-center text-green-500">✓</div>
             )}
 
-            {/* AI wrong */}
             {autoAnswered && index === aiAnswerIndex && aiAnswerIndex !== questions[current].correct && (
-              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
-                ✕
-              </div>
+              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">✕</div>
             )}
 
-            {/* AI correct */}
             {autoAnswered && index === aiAnswerIndex && aiAnswerIndex === questions[current].correct && (
-              <div className="absolute inset-0 flex items-center justify-center text-green-500 text-5xl">
-                ✓
-              </div>
+              <div className="absolute inset-0 flex items-center justify-center text-green-500">✓</div>
             )}
 
           </div>
