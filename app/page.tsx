@@ -70,12 +70,17 @@ export default function Home() {
 
   return () => clearInterval(timer);
 }, [current, started]);
-  
+
   useEffect(() => {
     if (!started) return;
     if (current >= questions.length) return;
   
-    const questionNumber = questions[current].id;
+    const question = questions[current];
+    if (!question) return;
+  
+    console.log("current:", current, "question:", question);
+  
+    const questionNumber = question.id;
   
     if (!competitiveQuestions.includes(questionNumber)) {
       setAutoAnswered(false);
