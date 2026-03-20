@@ -203,18 +203,31 @@ export default function Home() {
           text-center
         ">
 
-          {/* System Label */}
-          {/* Title */}
-         <div className="text-2xl font-semibold mb-6 leading-relaxed text-center">
-          <div className="text-3xl font-bold mb-4">
+          <div className="text-center">
+
+          {/* 标题 */}
+          <div className="text-4xl font-bold mb-4">
             <p>14 Matrix Problems.</p>
-            <p>You VS AI.</p>
+            <p>You vs AI.</p>
           </div>
-          <div className="mt-4 space-y-1">
+        
+          {/* 规则 */}
+          <div className="mt-6 space-y-2 text-lg text-gray-300">
             <p>⏱ 30 seconds per question</p>
             <p>⚔️ First to answer moves on</p>
           </div>
-          <p className="mt-6 text-cyan-400"></p>
+        
+          {/* assistant说明 */}
+          <div className="mt-6 text-gray-400 text-sm">
+            <p>
+              Need help? Use the <span className="text-cyan-400">ASSISTANT</span>
+            </p>
+          </div>
+        
+          {/* 结尾 */}
+          <p className="mt-6 text-cyan-400 text-xl font-semibold">
+          </p>
+        
         </div>
 
           {/* Description */}
