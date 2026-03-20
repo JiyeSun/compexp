@@ -151,7 +151,7 @@ export default function Home() {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white text-center">
           <h1 className="text-4xl font-bold mb-8">
-            AI Reasoning Challenge
+            Pattern Reasoning Challenge
             <br />
             <span className="text-cyan-400 text-xl">
               Can you outthink the AI?
