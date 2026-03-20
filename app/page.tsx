@@ -326,7 +326,7 @@ export default function Home() {
             />
       
             {/* 人类 ❌ */}
-            {showWrongMark && selectedIndex === index && (
+            {selectedIndex === index && showWrongMark && (
               <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
                 <span className="text-red-600 text-7xl font-bold">✕</span>
               </div>
@@ -334,6 +334,7 @@ export default function Home() {
       
             {/* 人类 ✔ */}
             {selectedIndex === index &&
+              !showWrongMark &&
               index === questions[current].correct && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-green-500 text-6xl font-bold">✓</span>
