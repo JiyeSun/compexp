@@ -87,24 +87,24 @@ export default function Home() {
     const reactionTime = 2000 + Math.random() * 2000;
     const timeout = setTimeout(() => {
       const isWrong = wrongAIQuestions.includes(questionNumber);
-    
       if (isWrong) {
         const wrongIndex = (questions[current].correct + 1) % 6;
         setAiAnswerIndex(wrongIndex);
+        setAutoAnswered(true);
+        // ⭐关键：让AI错误后恢复（可以继续答）
+        setTimeout(() => {
+          setAutoAnswered(false);
+          setAiAnswerIndex(null);
+        }, 800);
       } else {
         setAiAnswerIndex(questions[current].correct);
         setOpponentScore(prev => prev + 1);
-      }
-    
-      setAutoAnswered(true);
-    
-      // 只在AI答对时跳题
-      if (!isWrong) {
+        setAutoAnswered(true);
+        // AI答对才跳题
         setTimeout(() => {
           setCurrent(prev => prev + 1);
         }, 800);
       }
-    
     }, reactionTime);
 
     return () => clearTimeout(timeout);
@@ -119,7 +119,7 @@ export default function Home() {
   
 
   function handleAnswer(index: number) {
-  if (autoAnswered) return;
+  if (autoAnswered && aiAnswerIndex === questions[current].correct) return;
 
   setSelectedIndex(index);
 
