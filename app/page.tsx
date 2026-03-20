@@ -212,15 +212,15 @@ export default function Home() {
           </div>
         
           {/* 规则 */}
-          <div className="mt-6 space-y-2 text-lg text-gray-300">
+          <div className="mt-6 space-y-2 text-lg text-white">
             <p>⏱ 30 seconds per question</p>
             <p>⚔️ First to answer moves on</p>
           </div>
         
           {/* assistant说明 */}
-          <div className="mt-6 text-gray-400 text-sm">
+          <div className="mt-6 text-wgite text-sm">
             <p>
-              Need help? Use the <span className="text-cyan-400">ASSISTANT</span>
+              Your score will be compared with the AI at the end.
             </p>
           </div>
         
