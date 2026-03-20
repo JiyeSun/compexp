@@ -114,6 +114,8 @@ export default function Home() {
     );
   }
 
+  
+
   function handleAnswer(index: number) {
   if (autoAnswered) return;
 
@@ -309,27 +311,54 @@ export default function Home() {
       <div className="grid grid-cols-6 gap-6">
         {generateOptions(questions[current].id).map((option, index) => (
           <div key={index} className="relative">
-          <img
-            src={option}
-            alt="option"
-            onClick={() => handleAnswer(index)}
-            className={`w-24 h-24 object-contain transition
-              ${autoAnswered && index === aiAnswerIndex
-                ? "ring-4 ring-red-500 scale-110"
-                : ""}
-              ${selectedIndex === index
-                ? "ring-4 ring-cyan-400 scale-110"
-                : "cursor-pointer hover:scale-105"
-              }`}
-          />
-        
-          {showWrongMark && selectedIndex === index && (
-            <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
-              <span className="text-red-600 text-7xl font-bold">✕</span>
-            </div>
-          )}
-        </div>
+            <img
+              src={option}
+              alt="option"
+              onClick={() => handleAnswer(index)}
+              className={`w-24 h-24 object-contain transition
+                ${autoAnswered && index === aiAnswerIndex
+                  ? "ring-4 ring-red-500 scale-110"
+                  : ""}
+                ${selectedIndex === index
+                  ? "ring-4 ring-cyan-400 scale-110"
+                  : "cursor-pointer hover:scale-105"
+                }`}
+            />
       
+            {/* 人类 ❌ */}
+            {showWrongMark && selectedIndex === index && (
+              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
+                <span className="text-red-600 text-7xl font-bold">✕</span>
+              </div>
+            )}
+      
+            {/* 人类 ✔ */}
+            {selectedIndex === index &&
+              index === questions[current].correct && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-green-500 text-6xl font-bold">✓</span>
+                </div>
+            )}
+      
+            {/* AI ❌ */}
+            {autoAnswered &&
+              index === aiAnswerIndex &&
+              aiAnswerIndex !== questions[current].correct && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-red-600 text-7xl font-bold">✕</span>
+                </div>
+            )}
+      
+            {/* AI ✔ */}
+            {autoAnswered &&
+              index === aiAnswerIndex &&
+              aiAnswerIndex === questions[current].correct && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-green-500 text-6xl font-bold">✓</span>
+                </div>
+            )}
+      
+          </div>
         ))}
       </div>
 
