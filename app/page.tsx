@@ -154,7 +154,7 @@ export default function Home() {
             AI Reasoning Challenge
             <br />
             <span className="text-cyan-400 text-xl">
-              You VS An evolving AI system
+              Can you outthink the AI?
             </span>
           </h1>
   
@@ -207,13 +207,12 @@ export default function Home() {
           {/* Title */}
          <div className="text-2xl font-semibold mb-6 leading-relaxed text-center">
           <div className="text-4xl font-bold mb-4">
-            <p>14 Challenges.</p>
+            <p>14 Matrix Problems.</p>
             <p>You VS AI.</p>
           </div>
           <div className="mt-4 space-y-1">
             <p>⏱ 30 seconds per question</p>
             <p>⚔️ First to answer moves on</p>
-            <p>🧠 Beat the AI. Prove your reasoning.</p>
           </div>
           <p className="mt-6 text-cyan-400">Are you ready?</p>
         </div>
