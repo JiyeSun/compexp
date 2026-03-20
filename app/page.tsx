@@ -87,19 +87,7 @@ export default function Home() {
     if (!competitiveQuestions.includes(questionNumber)) {
       setAutoAnswered(false);
       return;
-    }
-  useEffect(() => {
-    if (!showCover && !started) {
-      setShowStartButton(false);
-  
-      const timer = setTimeout(() => {
-        setShowStartButton(true);
-      }, 2000);
-  
-      return () => clearTimeout(timer);
-    }
-  }, [showCover, started]);
-  
+    }  
     setAutoAnswered(false);
   
     const reactionTime = 4000 + Math.random() * 2000;
