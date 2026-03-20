@@ -33,6 +33,7 @@ export default function Home() {
   const [showWrongMark, setShowWrongMark] = useState<boolean>(false);
   const [aiAnswerIndex, setAiAnswerIndex] = useState<number | null>(null);
   const [showCover, setShowCover] = useState(true);
+  const [showStartButton, setShowStartButton] = useState(false);
 
 
   useEffect(() => {
@@ -87,6 +88,17 @@ export default function Home() {
       setAutoAnswered(false);
       return;
     }
+  useEffect(() => {
+    if (!started) {
+      setShowStartButton(false);
+  
+      const timer = setTimeout(() => {
+        setShowStartButton(true);
+      }, 2000);
+  
+      return () => clearTimeout(timer);
+    }
+  }, [started]);
   
     setAutoAnswered(false);
   
@@ -196,30 +208,43 @@ export default function Home() {
           {/* Description */}
           <p className="text-gray-600 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
           </p>
-
-          {/* Begin Button */}
-          <button
-            onClick={() => {
-              setStarted(true);
-              setExperimentStartTime(Date.now());
-            }}
-            className="
-              px-10 py-4
-              bg-black/80 backdrop-blur-md
-              text-cyan-400
-              rounded-2xl
-              border border-cyan-400
-              shadow-[0_0_20px_rgba(0,255,255,0.3)]
-              tracking-widest
-              text-lg
-              hover:bg-cyan-400 hover:text-black
-              hover:shadow-[0_0_25px_rgba(0,255,255,0.8)]
-              hover:scale-105 active:scale-95
-              transition-all duration-300
-            "
-          >
-            READY!
-          </button>
+          {/* Begin Button / Delayed Start */}
+          <div className="flex flex-col items-center justify-center mt-6">
+          
+            {/* 等待提示（前2秒显示） */}
+            {!showStartButton && (
+              <p className="text-gray-500 animate-pulse mb-4 text-lg tracking-wide">
+                Preparing challenge...
+              </p>
+            )}
+          
+            {/* 按钮（2秒后出现） */}
+            {showStartButton && (
+              <button
+                onClick={() => {
+                  setStarted(true);
+                  setExperimentStartTime(Date.now());
+                }}
+                className="
+                  px-10 py-4
+                  bg-black/80 backdrop-blur-md
+                  text-cyan-400
+                  rounded-2xl
+                  border border-cyan-400
+                  shadow-[0_0_20px_rgba(0,255,255,0.3)]
+                  tracking-widest
+                  text-lg
+                  hover:bg-cyan-400 hover:text-black
+                  hover:shadow-[0_0_25px_rgba(0,255,255,0.8)]
+                  hover:scale-105 active:scale-95
+                  transition-all duration-300
+                "
+              >
+                READY!
+              </button>
+            )}
+          
+          </div>
 
         </div>
 
