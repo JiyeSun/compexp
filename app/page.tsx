@@ -33,69 +33,74 @@ export default function Home() {
   const [showWrongMark, setShowWrongMark] = useState<boolean>(false);
   const [aiAnswerIndex, setAiAnswerIndex] = useState<number | null>(null);
 
+
   useEffect(() => {
-    if (!started || current >= questions.length) return;
+  if (!started || current >= questions.length) return;
 
-    const interval = setInterval(() => {
-      if (experimentStartTime) {
-        setTotalTime(Math.floor((Date.now() - experimentStartTime) / 1000));
+  const interval = setInterval(() => {
+    if (experimentStartTime) {
+      setTotalTime(Math.floor((Date.now() - experimentStartTime) / 1000));
+    }
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [started, experimentStartTime, current]);
+
+  useEffect(() => {
+  if (!started) return;
+
+  setTimeLeft(30);
+
+  const timer = setInterval(() => {
+    setTimeLeft((prev) => {
+      if (prev <= 1) {
+        clearInterval(timer);
+
+        if (current >= questions.length - 1) {
+          setCurrent(questions.length);
+        } else {
+          setCurrent((prevQ) => prevQ + 1);
+        }
+
+        return 30;
       }
-    }, 1000);
+      return prev - 1;
+    });
+  }, 1000);
 
-    return () => clearInterval(interval);
-  }, [started, experimentStartTime, current]);
-
+  return () => clearInterval(timer);
+}, [current, started]);
+  
   useEffect(() => {
     if (!started) return;
-
-    setTimeLeft(30);
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setCurrent(prevQ => prevQ + 1);
-          return 30;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [current, started]);
-
-  useEffect(() => {
-    if (!started || current >= questions.length) return;
-
+    if (current >= questions.length) return;
+  
     const questionNumber = questions[current].id;
-
+  
     if (!competitiveQuestions.includes(questionNumber)) {
       setAutoAnswered(false);
       return;
     }
-
+  
     setAutoAnswered(false);
-
+  
     const reactionTime = 4000 + Math.random() * 2000;
-
     const timeout = setTimeout(() => {
       const isWrong = wrongAIQuestions.includes(questionNumber);
-
       if (isWrong) {
         const wrongIndex = (questions[current].correct + 1) % 6;
         setAiAnswerIndex(wrongIndex);
         setAutoAnswered(true);
-
+        // ⭐关键：让AI错误后恢复（可以继续答）
         setTimeout(() => {
           setAutoAnswered(false);
           setAiAnswerIndex(null);
         }, 800);
-
       } else {
         setAiAnswerIndex(questions[current].correct);
         setOpponentScore(prev => prev + 1);
         setAutoAnswered(true);
-
+        // AI答对才跳题
         setTimeout(() => {
           setCurrent(prev => prev + 1);
         }, 800);
@@ -106,55 +111,130 @@ export default function Home() {
   }, [current, started]);
 
   function generateOptions(id: number) {
-    return Array.from({ length: 6 }, (_, i) => `/images/q${id}_a${i + 1}.png`);
+    return Array.from({ length: 6 }, (_, i) => 
+      `/images/q${id}_a${i + 1}.png`
+    );
   }
+
+  
 
   function handleAnswer(index: number) {
-    if (autoAnswered && aiAnswerIndex === questions[current].correct) return;
+  if (autoAnswered && aiAnswerIndex === questions[current].correct) return;
 
-    setSelectedIndex(index);
+  setSelectedIndex(index);
 
-    const isCorrect = index === questions[current].correct;
+  const isCorrect = index === questions[current].correct;
 
-    if (isCorrect) {
-      setScore(prev => prev + 1);
-    } else {
-      setShowWrongMark(true);
-    }
-
-    setTimeout(() => {
-      setSelectedIndex(null);
-      setShowWrongMark(false);
-
-      if (isCorrect) {
-        setCurrent(prev => prev + 1);
-      }
-    }, 1500);
+  if (isCorrect) {
+    setScore(prev => prev + 1);
+  } else {
+    setShowWrongMark(true);
   }
+  setTimeout(() => {
+    setSelectedIndex(null);
+    setShowWrongMark(false);
+  
+    if (isCorrect) {
+      setCurrent(prev => prev + 1);
+    }
+  }, 1500);
+}
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-black text-white font-sans flex items-center justify-center px-6">
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
 
-        <div className="bg-black border border-cyan-400 rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-2xl p-12 text-center">
+        <div className="
+          bg-black/70 backdrop-blur-xl
+          border border-cyan-400
+          text-white
+          rounded-3xl
+          shadow-[0_0_40px_rgba(0,255,255,0.2)]
+          max-w-2xl
+          p-12
+          text-center
+        ">
 
-          <h1 className="text-2xl font-semibold mb-6 leading-relaxed">
+          {/* System Label */}
+          {/* Title */}
+          <h1 className="text-2xl md:text-2xl font-semibold mb-6 leading-relaxed max-w-2xl mx-auto">
             This is a 14-question reasoning test.
+            You will be paired with an AI model that is currently being trained and evaluated.
+            Your performance will be compared with the AI’s performance in order to benchmark human and algorithmic reasoning under time constraints.
+            Your participation helps us better calibrate the model’s performance relative to human participants.
           </h1>
 
-          <p className="text-gray-200 mb-8 text-lg">
+          {/* Description */}
+          <p className="text-gray-300 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
+            You will have 30 seconds to complete each matrix. However, once either you or the AI completes a matrix, the task will automatically proceed to the next one.
             Click the button below to begin.
           </p>
 
+          {/* Begin Button */}
           <button
             onClick={() => {
               setStarted(true);
               setExperimentStartTime(Date.now());
             }}
-            className="px-10 py-4 bg-black text-cyan-400 rounded-2xl border border-cyan-400 hover:bg-cyan-400 hover:text-black transition"
+            className="
+              px-10 py-4
+              bg-black/80 backdrop-blur-md
+              text-cyan-400
+              rounded-2xl
+              border border-cyan-400
+              shadow-[0_0_20px_rgba(0,255,255,0.3)]
+              tracking-widest
+              text-lg
+              hover:bg-cyan-400 hover:text-black
+              hover:shadow-[0_0_25px_rgba(0,255,255,0.8)]
+              hover:scale-105 active:scale-95
+              transition-all duration-300
+            "
           >
             BEGIN
           </button>
+
+        </div>
+
+      </div>
+    );
+  }
+
+  if (current >= questions.length) {
+
+    const minutes = Math.floor(totalTime / 60);
+    const seconds = totalTime % 60;
+    const formattedSeconds = seconds.toString().padStart(2, "0");
+
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+
+        <div className="
+          bg-black/70 backdrop-blur-xl
+          border border-cyan-400
+          text-white
+          rounded-3xl
+          shadow-[0_0_40px_rgba(0,255,255,0.2)]
+          max-w-xl
+          px-16 py-14
+          text-center
+        ">
+
+          {/* System Label */}
+          <h1 className="text-3xl font-semibold mb-6 tracking-wide">
+            Experiment completed.
+          </h1>
+          <p className="text-lg text-gray-400 mt-4">
+            Total time: <span className="text-cyan-400 font-semibold">
+              {minutes}m {seconds}s
+            </span>
+          </p>
+          <p className="text-xl text-gray-300">
+            Your score: <span className="text-cyan-400 font-semibold">{score}</span>
+          </p>
+          <p className="text-xl text-gray-300">
+            AI's score: <span className="text-red-400 font-semibold">{opponentScore}</span>
+          </p>
 
         </div>
       </div>
@@ -162,42 +242,133 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen bg-black text-white font-sans flex flex-col items-center justify-center relative">
+    <div className="h-screen flex flex-col items-center justify-center relative">
+  
+  {/* QUESTION HUD */}
+  <div className="absolute top-4 left-4 
+    bg-black/80 backdrop-blur-md 
+    text-white px-6 py-3 
+    rounded-2xl shadow-2xl 
+    border border-cyan-400">
 
-      <img src={`/images/q${questions[current].id}.png`} className="mb-6 max-w-xl" />
+    <div className="text-center">
+      <p className="text-xs tracking-widest text-cyan-400">
+        QUESTION
+      </p>
+      <p className="text-2xl font-bold">
+        {current + 1}
+        <span className="text-sm text-gray-300 ml-2">
+          / {questions.length}
+        </span>
+      </p>
+    </div>
+
+  </div>
+
+
+  {/* Game Scoreboard */}
+  <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md 
+    text-white px-6 py-3 rounded-2xl shadow-2xl 
+    flex gap-8 items-center border border-cyan-400">
+    
+    {/* USER */}
+    <div className="text-center">
+      <p className="text-xs tracking-widest text-cyan-400">YOUR SCORE</p>
+      <p className="text-2xl font-bold text-green-400">{score}</p>
+    </div>
+
+    {/* TIME */}
+    <div className="text-center">
+      <p className="text-xs tracking-widest text-cyan-400">TIME</p>
+      <p className={`text-2xl font-bold ${
+        timeLeft <= 10 ? "text-red-500 animate-pulse" : "text-white"
+      }`}>
+        {timeLeft}s
+      </p>
+    </div>
+  </div>
+      
+  {/* OPPONENT SCOREBOARD */}
+  <div className="absolute top-28 right-4 
+    bg-black/80 backdrop-blur-md 
+    text-white px-6 py-3 
+    rounded-2xl shadow-2xl 
+    border border-cyan-400">
+  
+    <div className="text-center">
+      <p className="text-xs tracking-widest text-cyan-400">
+        AI's Score
+      </p>
+      <p className="text-2xl font-bold text-red-400">
+        {opponentScore}
+      </p>
+    </div>
+  
+  </div>  
+
+      <img
+        src={`/images/q${questions[current].id}.png`}
+        alt="question"
+        className="mb-6 max-w-xl"
+      />
 
       <div className="grid grid-cols-6 gap-6">
         {generateOptions(questions[current].id).map((option, index) => (
           <div key={index} className="relative">
-
             <img
               src={option}
+              alt="option"
               onClick={() => handleAnswer(index)}
-              className={`w-24 h-24
-                ${autoAnswered && index === aiAnswerIndex ? "ring-4 ring-red-500" : ""}
-                ${selectedIndex === index ? "ring-4 ring-cyan-400" : ""}
-              `}
+              className={`w-24 h-24 object-contain transition
+                ${autoAnswered && index === aiAnswerIndex
+                  ? "ring-4 ring-red-500 scale-110"
+                  : ""}
+                ${selectedIndex === index
+                  ? "ring-4 ring-cyan-400 scale-110"
+                  : "cursor-pointer hover:scale-105"
+                }`}
             />
-
+      
+            {/* 人类 ❌ */}
             {selectedIndex === index && showWrongMark && (
-              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">✕</div>
+              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
+                <span className="text-red-600 text-7xl font-bold">✕</span>
+              </div>
             )}
-
-            {selectedIndex === index && !showWrongMark && index === questions[current].correct && (
-              <div className="absolute inset-0 flex items-center justify-center text-green-500">✓</div>
+      
+            {/* 人类 ✔ */}
+            {selectedIndex === index &&
+              !showWrongMark &&
+              index === questions[current].correct && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-green-500 text-6xl font-bold">✓</span>
+                </div>
             )}
-
-            {autoAnswered && index === aiAnswerIndex && aiAnswerIndex !== questions[current].correct && (
-              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">✕</div>
+      
+            {/* AI ❌ */}
+            {autoAnswered &&
+              index === aiAnswerIndex &&
+              aiAnswerIndex !== questions[current].correct && (
+                <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
+                  <span className="text-red-600 text-7xl font-bold">✕</span>
+                </div>
             )}
-
-            {autoAnswered && index === aiAnswerIndex && aiAnswerIndex === questions[current].correct && (
-              <div className="absolute inset-0 flex items-center justify-center text-green-500">✓</div>
+      
+            {/* AI ✔ */}
+            {autoAnswered &&
+              index === aiAnswerIndex &&
+              aiAnswerIndex === questions[current].correct && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-green-500 text-6xl font-bold">✓</span>
+                </div>
             )}
-
+      
           </div>
         ))}
       </div>
+
+
+
     </div>
   );
 }
