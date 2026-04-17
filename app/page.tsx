@@ -209,8 +209,8 @@ export default function Home() {
           {/* 规则 */}
           <div className="mt-6 space-y-2 text-lg text-white text-left pl-6">
             <p>There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point, and both of you move on to the next question.</p>
-            <p>You will have 30 seconds for each question. The current question number will be shown in the upper left corner. The upper right corner will display the countdown timer and both scores.</p>
-            <p>When you select an answer, a green check mark will appear if it is correct, and a red cross mark will appear if it is incorrect. The AI agent’s answer and feedback will also be shown on the same screen, so you can see how the AI responds.</p>
+            <p>You will have 30 seconds per question. The upper left corner shows the question number. The upper right corner shows the countdown timer and both scores.</p>
+            <p>A green check mark indicates a correct answer, and a red cross mark indicates an incorrect answer. The AI agent’s responses and feedback will also be visible on the same screen.</p>
             <p>Your final score will be compared with the AI’s score. Please solve as many problems as you can.</p>
           </div>
         
