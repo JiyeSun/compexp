@@ -152,10 +152,6 @@ export default function Home() {
         <div className="text-white text-center">
           <h1 className="text-4xl font-bold mb-8">
             Pattern Reasoning Challenge
-            <br />
-            <span className="text-cyan-400 text-xl">
-              Can you outthink the AI?
-            </span>
           </h1>
   
           <button
@@ -207,21 +203,15 @@ export default function Home() {
 
           {/* 标题 */}
           <div className="text-4xl font-bold mb-4">
-            <p>14 Matrix Problems.</p>
-            <p>You vs AI.</p>
+            <p>RULES</p>
           </div>
         
           {/* 规则 */}
           <div className="mt-6 space-y-2 text-lg text-white">
-            <p>⏱ 30 seconds per question</p>
-            <p>⚔️ First to answer moves on</p>
-          </div>
-        
-          {/* assistant说明 */}
-          <div className="mt-6 text-wgite text-sm">
-            <p>
-              Your score will be compared with the AI at the end.
-            </p>
+            <p>There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point, and both of you move on to the next question.</p>
+            <p>You will have 30 seconds for each question. The current question number will be shown in the upper left corner. The upper right corner will display the countdown timer and both scores.</p>
+            <p>When you select an answer, a green check mark will appear if it is correct, and a red cross mark will appear if it is incorrect. The AI agent’s answer and feedback will also be shown on the same screen, so you can see how the AI responds.</p>
+            <p>Your final score will be compared with the AI’s score. Please solve as many problems as you can.</p>
           </div>
         
           {/* 结尾 */}
