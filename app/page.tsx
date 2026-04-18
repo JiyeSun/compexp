@@ -22,6 +22,10 @@ const competitiveQuestions = [1, 2, 3, 4, 5, 6, 9, 11];
 const wrongAIQuestions = [1, 3, 4];
 const QUESTION_TIME_LIMIT = 30;
 
+type TimerRef = {
+  current: ReturnType<typeof setTimeout> | ReturnType<typeof setInterval> | null;
+};
+
 function generateOptions(id: number) {
   return Array.from({ length: 6 }, (_, i) => `/images/q${id}_a${i + 1}.png`);
 }
@@ -47,12 +51,12 @@ export default function Home() {
   const aiFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 当前题是否已经被“结算”过（正确答案 / AI正确 / 超时）
+  const humanWrongRef = useRef(false);
+  const aiWrongRef = useRef(false);
   const questionResolvedRef = useRef(false);
-  // 当前是否处于反馈展示期（防止重复点击、重复触发）
   const inputLockedRef = useRef(false);
 
-  function clearTimer(ref: React.MutableRefObject<ReturnType<typeof setTimeout> | ReturnType<typeof setInterval> | null>) {
+  function clearTimer(ref: TimerRef) {
     if (ref.current) {
       clearTimeout(ref.current as ReturnType<typeof setTimeout>);
       clearInterval(ref.current as ReturnType<typeof setInterval>);
@@ -72,17 +76,15 @@ export default function Home() {
     setShowWrongMark(false);
     setAiAnswerIndex(null);
     setAutoAnswered(false);
+    humanWrongRef.current = false;
+    aiWrongRef.current = false;
   }
 
   function advanceQuestion() {
-    clearTimer(advanceTimeoutRef);
-    clearTimer(userFeedbackTimeoutRef);
-    clearTimer(aiFeedbackTimeoutRef);
-
+    clearAllTimers();
     resetQuestionVisualState();
     questionResolvedRef.current = false;
     inputLockedRef.current = false;
-
     setCurrent((prev) => prev + 1);
   }
 
@@ -99,10 +101,24 @@ export default function Home() {
     }, delayMs);
   }
 
+  function finishQuestionAsBothWrong(delayMs: number) {
+    if (questionResolvedRef.current) return;
+
+    questionResolvedRef.current = true;
+    inputLockedRef.current = true;
+    clearTimer(countdownRef);
+    clearTimer(userFeedbackTimeoutRef);
+    clearTimer(aiFeedbackTimeoutRef);
+
+    clearTimer(advanceTimeoutRef);
+    advanceTimeoutRef.current = setTimeout(() => {
+      advanceQuestion();
+    }, delayMs);
+  }
+
   useEffect(() => {
     if (!started || current >= questions.length) return;
 
-    // 每进入新题，重置本题状态
     clearAllTimers();
     questionResolvedRef.current = false;
     inputLockedRef.current = false;
@@ -114,7 +130,6 @@ export default function Home() {
         if (prev <= 1) {
           clearTimer(countdownRef);
           if (!questionResolvedRef.current) {
-            // 时间到：直接进入下一题，只结算一次
             questionResolvedRef.current = true;
             inputLockedRef.current = true;
             resetQuestionVisualState();
@@ -135,10 +150,6 @@ export default function Home() {
 
   useEffect(() => {
     if (!started || current >= questions.length) return;
-
-    const question = questions[current];
-    if (!question) return;
-
     if (!experimentStartTime) return;
 
     const interval = setInterval(() => {
@@ -161,7 +172,6 @@ export default function Home() {
     const reactionTime = 4000 + Math.random() * 2000;
 
     const timeout = setTimeout(() => {
-      // 本题如果已经被人类正确作答或超时结束，则 AI 不再介入
       if (questionResolvedRef.current) return;
 
       const isWrong = wrongAIQuestions.includes(question.id);
@@ -170,6 +180,12 @@ export default function Home() {
         const wrongIndex = (question.correct + 1) % 6;
         setAiAnswerIndex(wrongIndex);
         setAutoAnswered(true);
+        aiWrongRef.current = true;
+
+        if (humanWrongRef.current) {
+          finishQuestionAsBothWrong(800);
+          return;
+        }
 
         inputLockedRef.current = true;
         clearTimer(aiFeedbackTimeoutRef);
@@ -180,10 +196,9 @@ export default function Home() {
         }, 800);
       } else {
         setAiAnswerIndex(question.correct);
-        setAutoAnswered(true);
         setOpponentScore((prev) => prev + 1);
+        setAutoAnswered(true);
 
-        // AI 正确后，立即锁题，防止用户在同一题里再次作答或被计时器双重推进
         questionResolvedRef.current = true;
         inputLockedRef.current = true;
         clearTimer(countdownRef);
@@ -205,7 +220,6 @@ export default function Home() {
     const question = questions[current];
     if (!question) return;
 
-    // 已结算/反馈中时，不允许再次提交
     if (questionResolvedRef.current || inputLockedRef.current) return;
 
     setSelectedIndex(index);
@@ -219,9 +233,14 @@ export default function Home() {
       return;
     }
 
-    // 错误答案：只展示反馈，不推进题目
+    humanWrongRef.current = true;
     inputLockedRef.current = true;
     setShowWrongMark(true);
+
+    if (aiWrongRef.current) {
+      finishQuestionAsBothWrong(1500);
+      return;
+    }
 
     clearTimer(userFeedbackTimeoutRef);
     userFeedbackTimeoutRef.current = setTimeout(() => {
@@ -267,36 +286,17 @@ export default function Home() {
   if (!started) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center px-6">
-        <div
-          className="
-          bg-black/70 backdrop-blur-xl
-          border border-cyan-400
-          text-white
-          rounded-3xl
-          shadow-[0_0_40px_rgba(0,255,255,0.2)]
-          max-w-2xl
-          p-12
-          text-center
-        "
-        >
+        <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-2xl p-12 text-center">
           <div className="text-center">
             <div className="text-4xl font-bold mb-4">
               <p>RULES</p>
             </div>
 
             <div className="mt-6 space-y-2 text-lg text-white text-left pl-6">
-              <p>
-                There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point, and both of you move on to the next question.
-              </p>
-              <p>
-                You will have 30 seconds per question. The upper left corner shows the question number. The upper right corner shows the countdown timer and both scores.
-              </p>
-              <p>
-                A green check mark indicates a correct answer, and a red cross mark indicates an incorrect answer. The AI agent’s responses and feedback will also be visible on the same screen.
-              </p>
-              <p>
-                Your final score will be compared with the AI’s score. Please solve as many problems as you can.
-              </p>
+              <p>There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point, and both of you move on to the next question.</p>
+              <p>You will have 30 seconds per question. The upper left corner shows the question number. The upper right corner shows the countdown timer and both scores.</p>
+              <p>A green check mark indicates a correct answer, and a red cross mark indicates an incorrect answer. The AI agent’s responses and feedback will also be visible on the same screen.</p>
+              <p>Your final score will be compared with the AI’s score. Please solve as many problems as you can.</p>
             </div>
 
             <p className="mt-6 text-cyan-400 text-xl font-semibold"></p>
@@ -315,20 +315,7 @@ export default function Home() {
                   setStarted(true);
                   setExperimentStartTime(Date.now());
                 }}
-                className="
-                  px-10 py-4
-                  bg-black/80 backdrop-blur-md
-                  text-cyan-400
-                  rounded-2xl
-                  border border-cyan-400
-                  shadow-[0_0_20px_rgba(0,255,255,0.3)]
-                  tracking-widest
-                  text-lg
-                  hover:bg-cyan-400 hover:text-black
-                  hover:shadow-[0_0_25px_rgba(0,255,255,0.8)]
-                  hover:scale-105 active:scale-95
-                  transition-all duration-300
-                "
+                className="px-10 py-4 bg-black/80 backdrop-blur-md text-cyan-400 rounded-2xl border border-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.3)] tracking-widest text-lg hover:bg-cyan-400 hover:text-black hover:shadow-[0_0_25px_rgba(0,255,255,0.8)] hover:scale-105 active:scale-95 transition-all duration-300"
               >
                 READY!
               </button>
@@ -345,18 +332,7 @@ export default function Home() {
 
     return (
       <div className="min-h-screen bg-black flex items-center justify-center px-6">
-        <div
-          className="
-          bg-black/70 backdrop-blur-xl
-          border border-cyan-400
-          text-white
-          rounded-3xl
-          shadow-[0_0_40px_rgba(0,255,255,0.2)]
-          max-w-xl
-          px-16 py-14
-          text-center
-        "
-        >
+        <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-xl px-16 py-14 text-center">
           <h1 className="text-3xl font-semibold mb-6 tracking-wide">Experiment completed.</h1>
           <p className="text-lg text-gray-700 mt-4">
             Total time: <span className="text-cyan-400 font-semibold">{minutes}m {seconds}s</span>
