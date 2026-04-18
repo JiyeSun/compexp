@@ -51,10 +51,13 @@ export default function Home() {
   const aiFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const humanWrongRef = useRef(false);
-  const aiWrongRef = useRef(false);
   const questionResolvedRef = useRef(false);
   const inputLockedRef = useRef(false);
+
+  const humanAnsweredRef = useRef(false);
+  const aiAnsweredRef = useRef(false);
+  const humanCorrectRef = useRef(false);
+  const aiCorrectRef = useRef(false);
 
   function clearTimer(ref: TimerRef) {
     if (ref.current) {
@@ -71,58 +74,50 @@ export default function Home() {
     clearTimer(advanceTimeoutRef);
   }
 
-  function resetQuestionVisualState() {
+  function resetQuestionState() {
     setSelectedIndex(null);
     setShowWrongMark(false);
     setAiAnswerIndex(null);
     setAutoAnswered(false);
-    humanWrongRef.current = false;
-    aiWrongRef.current = false;
+    questionResolvedRef.current = false;
+    inputLockedRef.current = false;
+    humanAnsweredRef.current = false;
+    aiAnsweredRef.current = false;
+    humanCorrectRef.current = false;
+    aiCorrectRef.current = false;
   }
 
   function advanceQuestion() {
     clearAllTimers();
-    resetQuestionVisualState();
-    questionResolvedRef.current = false;
-    inputLockedRef.current = false;
+    resetQuestionState();
     setCurrent((prev) => prev + 1);
   }
 
-  function finishQuestionWithDelay(delayMs: number) {
-    if (questionResolvedRef.current) return;
-
-    questionResolvedRef.current = true;
-    inputLockedRef.current = true;
-    clearTimer(countdownRef);
-
+  function scheduleAdvance(delayMs: number) {
     clearTimer(advanceTimeoutRef);
     advanceTimeoutRef.current = setTimeout(() => {
       advanceQuestion();
     }, delayMs);
   }
 
-  function finishQuestionAsBothWrong(delayMs: number) {
+  function resolveIfBothWrong(delayMs: number) {
     if (questionResolvedRef.current) return;
+    if (!humanAnsweredRef.current || !aiAnsweredRef.current) return;
+    if (humanCorrectRef.current || aiCorrectRef.current) return;
 
     questionResolvedRef.current = true;
     inputLockedRef.current = true;
     clearTimer(countdownRef);
     clearTimer(userFeedbackTimeoutRef);
     clearTimer(aiFeedbackTimeoutRef);
-
-    clearTimer(advanceTimeoutRef);
-    advanceTimeoutRef.current = setTimeout(() => {
-      advanceQuestion();
-    }, delayMs);
+    scheduleAdvance(delayMs);
   }
 
   useEffect(() => {
     if (!started || current >= questions.length) return;
 
     clearAllTimers();
-    questionResolvedRef.current = false;
-    inputLockedRef.current = false;
-    resetQuestionVisualState();
+    resetQuestionState();
     setTimeLeft(QUESTION_TIME_LIMIT);
 
     countdownRef.current = setInterval(() => {
@@ -132,9 +127,7 @@ export default function Home() {
           if (!questionResolvedRef.current) {
             questionResolvedRef.current = true;
             inputLockedRef.current = true;
-            resetQuestionVisualState();
-            setTimeLeft(QUESTION_TIME_LIMIT);
-            setCurrent((q) => (q >= questions.length - 1 ? questions.length : q + 1));
+            scheduleAdvance(0);
           }
           return QUESTION_TIME_LIMIT;
         }
@@ -164,10 +157,7 @@ export default function Home() {
 
     const question = questions[current];
     if (!question) return;
-
-    if (!competitiveQuestions.includes(question.id)) {
-      return;
-    }
+    if (!competitiveQuestions.includes(question.id)) return;
 
     const reactionTime = 4000 + Math.random() * 2000;
 
@@ -175,15 +165,16 @@ export default function Home() {
       if (questionResolvedRef.current) return;
 
       const isWrong = wrongAIQuestions.includes(question.id);
+      aiAnsweredRef.current = true;
 
       if (isWrong) {
         const wrongIndex = (question.correct + 1) % 6;
+        aiCorrectRef.current = false;
         setAiAnswerIndex(wrongIndex);
         setAutoAnswered(true);
-        aiWrongRef.current = true;
 
-        if (humanWrongRef.current) {
-          finishQuestionAsBothWrong(800);
+        if (humanAnsweredRef.current && !humanCorrectRef.current) {
+          resolveIfBothWrong(500);
           return;
         }
 
@@ -194,23 +185,18 @@ export default function Home() {
           setAiAnswerIndex(null);
           inputLockedRef.current = false;
         }, 800);
-      } else {
-        setAiAnswerIndex(question.correct);
-        setOpponentScore((prev) => prev + 1);
-        setAutoAnswered(true);
-
-        questionResolvedRef.current = true;
-        inputLockedRef.current = true;
-        clearTimer(countdownRef);
-
-        clearTimer(aiFeedbackTimeoutRef);
-        aiFeedbackTimeoutRef.current = setTimeout(() => {
-          resetQuestionVisualState();
-          inputLockedRef.current = false;
-          questionResolvedRef.current = false;
-          setCurrent((prev) => prev + 1);
-        }, 800);
+        return;
       }
+
+      aiCorrectRef.current = true;
+      setAiAnswerIndex(question.correct);
+      setOpponentScore((prev) => prev + 1);
+      setAutoAnswered(true);
+
+      questionResolvedRef.current = true;
+      inputLockedRef.current = true;
+      clearTimer(countdownRef);
+      scheduleAdvance(800);
     }, reactionTime);
 
     return () => clearTimeout(timeout);
@@ -219,26 +205,29 @@ export default function Home() {
   function handleAnswer(index: number) {
     const question = questions[current];
     if (!question) return;
-
     if (questionResolvedRef.current || inputLockedRef.current) return;
 
+    humanAnsweredRef.current = true;
     setSelectedIndex(index);
 
     const isCorrect = index === question.correct;
+    humanCorrectRef.current = isCorrect;
 
     if (isCorrect) {
       setScore((prev) => prev + 1);
       setShowWrongMark(false);
-      finishQuestionWithDelay(1500);
+      questionResolvedRef.current = true;
+      inputLockedRef.current = true;
+      clearTimer(countdownRef);
+      scheduleAdvance(1500);
       return;
     }
 
-    humanWrongRef.current = true;
-    inputLockedRef.current = true;
     setShowWrongMark(true);
+    inputLockedRef.current = true;
 
-    if (aiWrongRef.current) {
-      finishQuestionAsBothWrong(1500);
+    if (aiAnsweredRef.current && !aiCorrectRef.current) {
+      resolveIfBothWrong(500);
       return;
     }
 
