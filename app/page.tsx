@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const questions = [
   { id: 1, correct: 0 },
@@ -15,101 +15,185 @@ const questions = [
   { id: 11, correct: 2 },
   { id: 12, correct: 5 },
   { id: 13, correct: 3 },
-  { id: 14, correct: 1 }
+  { id: 14, correct: 1 },
 ];
+
+const competitiveQuestions = [1, 2, 3, 4, 5, 6, 9, 11];
+const wrongAIQuestions = [1, 3, 4];
+const QUESTION_TIME_LIMIT = 30;
+
+function generateOptions(id: number) {
+  return Array.from({ length: 6 }, (_, i) => `/images/q${id}_a${i + 1}.png`);
+}
 
 export default function Home() {
   const [current, setCurrent] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
-  const [timeLeft, setTimeLeft] = useState<number>(30);
+  const [timeLeft, setTimeLeft] = useState<number>(QUESTION_TIME_LIMIT);
   const [totalTime, setTotalTime] = useState<number>(0);
   const [experimentStartTime, setExperimentStartTime] = useState<number | null>(null);
   const [started, setStarted] = useState<boolean>(false);
   const [opponentScore, setOpponentScore] = useState<number>(0);
-  const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
-  const competitiveQuestions = [1,2,3,4,5,6,9,11];
-  const wrongAIQuestions = [1,3,4];
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [showWrongMark, setShowWrongMark] = useState<boolean>(false);
   const [aiAnswerIndex, setAiAnswerIndex] = useState<number | null>(null);
   const [showCover, setShowCover] = useState(true);
   const [showStartButton, setShowStartButton] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
 
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const userFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const aiFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-  if (!started || current >= questions.length) return;
+  // 当前题是否已经被“结算”过（正确答案 / AI正确 / 超时）
+  const questionResolvedRef = useRef(false);
+  // 当前是否处于反馈展示期（防止重复点击、重复触发）
+  const inputLockedRef = useRef(false);
 
-  const interval = setInterval(() => {
-    if (experimentStartTime) {
-      setTotalTime(Math.floor((Date.now() - experimentStartTime) / 1000));
+  function clearTimer(ref: React.MutableRefObject<ReturnType<typeof setTimeout> | ReturnType<typeof setInterval> | null>) {
+    if (ref.current) {
+      clearTimeout(ref.current as ReturnType<typeof setTimeout>);
+      clearInterval(ref.current as ReturnType<typeof setInterval>);
+      ref.current = null;
     }
-  }, 1000);
+  }
 
-  return () => clearInterval(interval);
-}, [started, experimentStartTime, current]);
+  function clearAllTimers() {
+    clearTimer(countdownRef);
+    clearTimer(userFeedbackTimeoutRef);
+    clearTimer(aiFeedbackTimeoutRef);
+    clearTimer(advanceTimeoutRef);
+  }
+
+  function resetQuestionVisualState() {
+    setSelectedIndex(null);
+    setShowWrongMark(false);
+    setAiAnswerIndex(null);
+    setAutoAnswered(false);
+  }
+
+  function advanceQuestion() {
+    clearTimer(advanceTimeoutRef);
+    clearTimer(userFeedbackTimeoutRef);
+    clearTimer(aiFeedbackTimeoutRef);
+
+    resetQuestionVisualState();
+    questionResolvedRef.current = false;
+    inputLockedRef.current = false;
+
+    setCurrent((prev) => prev + 1);
+  }
+
+  function finishQuestionWithDelay(delayMs: number) {
+    if (questionResolvedRef.current) return;
+
+    questionResolvedRef.current = true;
+    inputLockedRef.current = true;
+    clearTimer(countdownRef);
+
+    clearTimer(advanceTimeoutRef);
+    advanceTimeoutRef.current = setTimeout(() => {
+      advanceQuestion();
+    }, delayMs);
+  }
 
   useEffect(() => {
-  if (!started) return;
+    if (!started || current >= questions.length) return;
 
-  setTimeLeft(30);
+    // 每进入新题，重置本题状态
+    clearAllTimers();
+    questionResolvedRef.current = false;
+    inputLockedRef.current = false;
+    resetQuestionVisualState();
+    setTimeLeft(QUESTION_TIME_LIMIT);
 
-  const timer = setInterval(() => {
-    setTimeLeft((prev) => {
-      if (prev <= 1) {
-        clearInterval(timer);
-
-        if (current >= questions.length - 1) {
-          setCurrent(questions.length);
-        } else {
-          setCurrent((prevQ) => prevQ + 1);
+    countdownRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearTimer(countdownRef);
+          if (!questionResolvedRef.current) {
+            // 时间到：直接进入下一题，只结算一次
+            questionResolvedRef.current = true;
+            inputLockedRef.current = true;
+            resetQuestionVisualState();
+            setTimeLeft(QUESTION_TIME_LIMIT);
+            setCurrent((q) => (q >= questions.length - 1 ? questions.length : q + 1));
+          }
+          return QUESTION_TIME_LIMIT;
         }
+        return prev - 1;
+      });
+    }, 1000);
 
-        return 30;
-      }
-      return prev - 1;
-    });
-  }, 1000);
-
-  return () => clearInterval(timer);
-}, [current, started]);
+    return () => {
+      clearAllTimers();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [started, current]);
 
   useEffect(() => {
-    if (!started) return;
-    if (current >= questions.length) return;
-  
+    if (!started || current >= questions.length) return;
+
     const question = questions[current];
     if (!question) return;
-  
-    console.log("current:", current, "question:", question);
-  
-    const questionNumber = question.id;
-  
-    if (!competitiveQuestions.includes(questionNumber)) {
-      setAutoAnswered(false);
+
+    if (!experimentStartTime) return;
+
+    const interval = setInterval(() => {
+      setTotalTime(Math.floor((Date.now() - experimentStartTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [started, experimentStartTime, current]);
+
+  useEffect(() => {
+    if (!started || current >= questions.length) return;
+
+    const question = questions[current];
+    if (!question) return;
+
+    if (!competitiveQuestions.includes(question.id)) {
       return;
-    }  
-    setAutoAnswered(false);
-  
+    }
+
     const reactionTime = 4000 + Math.random() * 2000;
+
     const timeout = setTimeout(() => {
-      const isWrong = wrongAIQuestions.includes(questionNumber);
+      // 本题如果已经被人类正确作答或超时结束，则 AI 不再介入
+      if (questionResolvedRef.current) return;
+
+      const isWrong = wrongAIQuestions.includes(question.id);
+
       if (isWrong) {
-        const wrongIndex = (questions[current].correct + 1) % 6;
+        const wrongIndex = (question.correct + 1) % 6;
         setAiAnswerIndex(wrongIndex);
         setAutoAnswered(true);
-        // ⭐关键：让AI错误后恢复（可以继续答）
-        setTimeout(() => {
+
+        inputLockedRef.current = true;
+        clearTimer(aiFeedbackTimeoutRef);
+        aiFeedbackTimeoutRef.current = setTimeout(() => {
           setAutoAnswered(false);
           setAiAnswerIndex(null);
+          inputLockedRef.current = false;
         }, 800);
       } else {
-        setAiAnswerIndex(questions[current].correct);
-        setOpponentScore(prev => prev + 1);
+        setAiAnswerIndex(question.correct);
         setAutoAnswered(true);
-        // AI答对才跳题
-        setTimeout(() => {
-          setCurrent(prev => prev + 1);
+        setOpponentScore((prev) => prev + 1);
+
+        // AI 正确后，立即锁题，防止用户在同一题里再次作答或被计时器双重推进
+        questionResolvedRef.current = true;
+        inputLockedRef.current = true;
+        clearTimer(countdownRef);
+
+        clearTimer(aiFeedbackTimeoutRef);
+        aiFeedbackTimeoutRef.current = setTimeout(() => {
+          resetQuestionVisualState();
+          inputLockedRef.current = false;
+          questionResolvedRef.current = false;
+          setCurrent((prev) => prev + 1);
         }, 800);
       }
     }, reactionTime);
@@ -117,66 +201,61 @@ export default function Home() {
     return () => clearTimeout(timeout);
   }, [current, started]);
 
-  function generateOptions(id: number) {
-    return Array.from({ length: 6 }, (_, i) => 
-      `/images/q${id}_a${i + 1}.png`
-    );
-  }
-
-  
-
   function handleAnswer(index: number) {
-  if (autoAnswered && aiAnswerIndex === questions[current].correct) return;
+    const question = questions[current];
+    if (!question) return;
 
-  setSelectedIndex(index);
+    // 已结算/反馈中时，不允许再次提交
+    if (questionResolvedRef.current || inputLockedRef.current) return;
 
-  const isCorrect = index === questions[current].correct;
+    setSelectedIndex(index);
 
-  if (isCorrect) {
-    setScore(prev => prev + 1);
-  } else {
-    setShowWrongMark(true);
-  }
-  setTimeout(() => {
-    setSelectedIndex(null);
-    setShowWrongMark(false);
-  
+    const isCorrect = index === question.correct;
+
     if (isCorrect) {
-      setCurrent(prev => prev + 1);
+      setScore((prev) => prev + 1);
+      setShowWrongMark(false);
+      finishQuestionWithDelay(1500);
+      return;
     }
-  }, 1500);
-}
+
+    // 错误答案：只展示反馈，不推进题目
+    inputLockedRef.current = true;
+    setShowWrongMark(true);
+
+    clearTimer(userFeedbackTimeoutRef);
+    userFeedbackTimeoutRef.current = setTimeout(() => {
+      setSelectedIndex(null);
+      setShowWrongMark(false);
+      inputLockedRef.current = false;
+    }, 1500);
+  }
+
   if (showCover) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white text-center">
-          <h1 className="text-4xl font-bold mb-8">
-            Pattern Reasoning Challenge
-          </h1>
-  
+          <h1 className="text-4xl font-bold mb-8">Pattern Reasoning Challenge</h1>
+
           <button
             onClick={() => {
               setShowCover(false);
-            
               setShowStartButton(false);
-              setProgress(0); // 👈 新增
-            
-              let start = Date.now();
-            
+              setProgress(0);
+
+              const start = Date.now();
               const interval = setInterval(() => {
                 const elapsed = Date.now() - start;
                 const percent = Math.min(elapsed / 2000, 1);
-            
                 setProgress(percent);
-            
+
                 if (percent === 1) {
                   clearInterval(interval);
                   setShowStartButton(true);
                 }
               }, 16);
             }}
-            className="px-10 py-4 border border-cyan-400 text-cyan-400 rounded-2xl
-            hover:bg-cyan-400 hover:text-black transition"
+            className="px-10 py-4 border border-cyan-400 text-cyan-400 rounded-2xl hover:bg-cyan-400 hover:text-black transition"
           >
             BEGIN
           </button>
@@ -184,11 +263,12 @@ export default function Home() {
       </div>
     );
   }
+
   if (!started) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center px-6">
-
-        <div className="
+        <div
+          className="
           bg-black/70 backdrop-blur-xl
           border border-cyan-400
           text-white
@@ -197,43 +277,38 @@ export default function Home() {
           max-w-2xl
           p-12
           text-center
-        ">
-
+        "
+        >
           <div className="text-center">
+            <div className="text-4xl font-bold mb-4">
+              <p>RULES</p>
+            </div>
 
-          {/* 标题 */}
-          <div className="text-4xl font-bold mb-4">
-            <p>RULES</p>
-          </div>
-        
-          {/* 规则 */}
-          <div className="mt-6 space-y-2 text-lg text-white text-left pl-6">
-            <p>There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point, and both of you move on to the next question.</p>
-            <p>You will have 30 seconds per question. The upper left corner shows the question number. The upper right corner shows the countdown timer and both scores.</p>
-            <p>A green check mark indicates a correct answer, and a red cross mark indicates an incorrect answer. The AI agent’s responses and feedback will also be visible on the same screen.</p>
-            <p>Your final score will be compared with the AI’s score. Please solve as many problems as you can.</p>
-          </div>
-        
-          {/* 结尾 */}
-          <p className="mt-6 text-cyan-400 text-xl font-semibold">
-          </p>
-        
-        </div>
-
-          {/* Description */}
-          <p className="text-gray-600 leading-relaxed mb-8 text-lg max-w-xl mx-auto">
-          </p>
-          {/* Begin Button / Delayed Start */}
-          <div className="flex flex-col items-center justify-center mt-6">
-          
-            {/* 等待提示（前2秒显示） */}
-            {!showStartButton && (
-              <p className="text-gray-500 animate-pulse mb-4 text-lg tracking-wide">
-                Preparing challenge...
+            <div className="mt-6 space-y-2 text-lg text-white text-left pl-6">
+              <p>
+                There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point, and both of you move on to the next question.
               </p>
+              <p>
+                You will have 30 seconds per question. The upper left corner shows the question number. The upper right corner shows the countdown timer and both scores.
+              </p>
+              <p>
+                A green check mark indicates a correct answer, and a red cross mark indicates an incorrect answer. The AI agent’s responses and feedback will also be visible on the same screen.
+              </p>
+              <p>
+                Your final score will be compared with the AI’s score. Please solve as many problems as you can.
+              </p>
+            </div>
+
+            <p className="mt-6 text-cyan-400 text-xl font-semibold"></p>
+          </div>
+
+          <p className="text-gray-600 leading-relaxed mb-8 text-lg max-w-xl mx-auto"></p>
+
+          <div className="flex flex-col items-center justify-center mt-6">
+            {!showStartButton && (
+              <p className="text-gray-500 animate-pulse mb-4 text-lg tracking-wide">Preparing challenge...</p>
             )}
-          
-            {/* 按钮（2秒后出现） */}
+
             {showStartButton && (
               <button
                 onClick={() => {
@@ -258,25 +333,20 @@ export default function Home() {
                 READY!
               </button>
             )}
-          
           </div>
-
         </div>
-
       </div>
     );
   }
 
   if (current >= questions.length) {
-
     const minutes = Math.floor(totalTime / 60);
     const seconds = totalTime % 60;
-    const formattedSeconds = seconds.toString().padStart(2, "0");
 
     return (
       <div className="min-h-screen bg-black flex items-center justify-center px-6">
-
-        <div className="
+        <div
+          className="
           bg-black/70 backdrop-blur-xl
           border border-cyan-400
           text-white
@@ -285,16 +355,11 @@ export default function Home() {
           max-w-xl
           px-16 py-14
           text-center
-        ">
-
-          {/* System Label */}
-          <h1 className="text-3xl font-semibold mb-6 tracking-wide">
-            Experiment completed.
-          </h1>
+        "
+        >
+          <h1 className="text-3xl font-semibold mb-6 tracking-wide">Experiment completed.</h1>
           <p className="text-lg text-gray-700 mt-4">
-            Total time: <span className="text-cyan-400 font-semibold">
-              {minutes}m {seconds}s
-            </span>
+            Total time: <span className="text-cyan-400 font-semibold">{minutes}m {seconds}s</span>
           </p>
           <p className="text-xl text-gray-600">
             Your score: <span className="text-cyan-400 font-semibold">{score}</span>
@@ -302,140 +367,87 @@ export default function Home() {
           <p className="text-xl text-gray-600">
             AI's score: <span className="text-red-400 font-semibold">{opponentScore}</span>
           </p>
-
         </div>
       </div>
     );
   }
 
+  const question = questions[current];
+
   return (
     <div className="h-screen flex flex-col items-center justify-center relative font-sans">
-  
-  {/* QUESTION HUD */}
-  <div className="absolute top-4 left-4 
-    bg-black/80 backdrop-blur-md 
-    text-white px-6 py-3 
-    rounded-2xl shadow-2xl 
-    border border-cyan-400">
+      <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl border border-cyan-400">
+        <div className="text-center">
+          <p className="text-xs tracking-widest text-cyan-400">QUESTION</p>
+          <p className="text-2xl font-bold">
+            {current + 1}
+            <span className="text-sm text-gray-600 ml-2">/ {questions.length}</span>
+          </p>
+        </div>
+      </div>
 
-    <div className="text-center">
-      <p className="text-xs tracking-widest text-cyan-400">
-        QUESTION
-      </p>
-      <p className="text-2xl font-bold">
-        {current + 1}
-        <span className="text-sm text-gray-600 ml-2">
-          / {questions.length}
-        </span>
-      </p>
-    </div>
+      <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl flex gap-8 items-center border border-cyan-400">
+        <div className="text-center">
+          <p className="text-xs tracking-widest text-cyan-400">YOUR SCORE</p>
+          <p className="text-2xl font-bold text-green-400">{score}</p>
+        </div>
 
-  </div>
+        <div className="text-center">
+          <p className="text-xs tracking-widest text-cyan-400">TIME</p>
+          <p className={`text-2xl font-bold ${timeLeft <= 10 ? "text-red-500 animate-pulse" : "text-white"}`}>
+            {timeLeft}s
+          </p>
+        </div>
+      </div>
 
+      <div className="absolute top-28 right-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl border border-cyan-400">
+        <div className="text-center">
+          <p className="text-xs tracking-widest text-cyan-400">AI's Score</p>
+          <p className="text-2xl font-bold text-red-400">{opponentScore}</p>
+        </div>
+      </div>
 
-  {/* Game Scoreboard */}
-  <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md 
-    text-white px-6 py-3 rounded-2xl shadow-2xl 
-    flex gap-8 items-center border border-cyan-400">
-    
-    {/* USER */}
-    <div className="text-center">
-      <p className="text-xs tracking-widest text-cyan-400">YOUR SCORE</p>
-      <p className="text-2xl font-bold text-green-400">{score}</p>
-    </div>
-
-    {/* TIME */}
-    <div className="text-center">
-      <p className="text-xs tracking-widest text-cyan-400">TIME</p>
-      <p className={`text-2xl font-bold ${
-        timeLeft <= 10 ? "text-red-500 animate-pulse" : "text-white"
-      }`}>
-        {timeLeft}s
-      </p>
-    </div>
-  </div>
-      
-  {/* OPPONENT SCOREBOARD */}
-  <div className="absolute top-28 right-4 
-    bg-black/80 backdrop-blur-md 
-    text-white px-6 py-3 
-    rounded-2xl shadow-2xl 
-    border border-cyan-400">
-  
-    <div className="text-center">
-      <p className="text-xs tracking-widest text-cyan-400">
-        AI's Score
-      </p>
-      <p className="text-2xl font-bold text-red-400">
-        {opponentScore}
-      </p>
-    </div>
-  
-  </div>  
-
-      <img
-        src={`/images/q${questions[current].id}.png`}
-        alt="question"
-        className="mb-6 max-w-xl"
-      />
+      <img src={`/images/q${question.id}.png`} alt="question" className="mb-6 max-w-xl" />
 
       <div className="grid grid-cols-6 gap-6">
-        {generateOptions(questions[current].id).map((option, index) => (
+        {generateOptions(question.id).map((option, index) => (
           <div key={index} className="relative">
             <img
               src={option}
               alt="option"
               onClick={() => handleAnswer(index)}
               className={`w-24 h-24 object-contain transition
-                ${autoAnswered && index === aiAnswerIndex
-                  ? "ring-4 ring-red-500 scale-110"
-                  : ""}
-                ${selectedIndex === index
-                  ? "ring-4 ring-cyan-400 scale-110"
-                  : "cursor-pointer hover:scale-105"
-                }`}
+                ${autoAnswered && index === aiAnswerIndex ? "ring-4 ring-red-500 scale-110" : ""}
+                ${selectedIndex === index ? "ring-4 ring-cyan-400 scale-110" : "cursor-pointer hover:scale-105"}
+              `}
             />
-      
-            {/* 人类 ❌ */}
+
             {selectedIndex === index && showWrongMark && (
               <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
                 <span className="text-red-600 text-7xl font-bold">✕</span>
               </div>
             )}
-      
-            {/* 人类 ✔ */}
-            {selectedIndex === index &&
-              !showWrongMark &&
-              index === questions[current].correct && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-green-500 text-6xl font-bold">✓</span>
-                </div>
+
+            {selectedIndex === index && !showWrongMark && index === question.correct && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-green-500 text-6xl font-bold">✓</span>
+              </div>
             )}
-      
-            {/* AI ❌ */}
-            {autoAnswered &&
-              index === aiAnswerIndex &&
-              aiAnswerIndex !== questions[current].correct && (
-                <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
-                  <span className="text-red-600 text-7xl font-bold">✕</span>
-                </div>
+
+            {autoAnswered && index === aiAnswerIndex && aiAnswerIndex !== question.correct && (
+              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
+                <span className="text-red-600 text-7xl font-bold">✕</span>
+              </div>
             )}
-      
-            {/* AI ✔ */}
-            {autoAnswered &&
-              index === aiAnswerIndex &&
-              aiAnswerIndex === questions[current].correct && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-green-500 text-6xl font-bold">✓</span>
-                </div>
+
+            {autoAnswered && index === aiAnswerIndex && aiAnswerIndex === question.correct && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-green-500 text-6xl font-bold">✓</span>
+              </div>
             )}
-      
           </div>
         ))}
       </div>
-
-
-
     </div>
   );
 }
