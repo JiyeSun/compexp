@@ -22,7 +22,7 @@ const competitiveQuestions = [1, 2, 3, 4, 5, 6, 9, 11];
 const wrongAIQuestions = [1, 3, 4];
 const QUESTION_TIME_LIMIT = 30;
 
-const conditionId = "2"; //
+const conditionId = "2";
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
 
 type TimerRef = {
@@ -46,9 +46,7 @@ export default function Home() {
   const [aiAnswerIndex, setAiAnswerIndex] = useState<number | null>(null);
   const [showCover, setShowCover] = useState(true);
   const [showStartButton, setShowStartButton] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
-
   const [participantId, setParticipantId] = useState<string>("");
 
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -234,6 +232,15 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [current, started, participantId]);
 
+  function goBackToQuestionnaire() {
+    if (!participantId) return;
+
+    window.location.href =
+      `${QUALTRICS_RETURN_URL}` +
+      `?participant_id=${encodeURIComponent(participantId)}` +
+      `&condition_id=${encodeURIComponent(conditionId)}`;
+  }
+
   function handleAnswer(index: number) {
     const question = questions[current];
     if (!question) return;
@@ -281,19 +288,10 @@ export default function Home() {
             onClick={() => {
               setShowCover(false);
               setShowStartButton(false);
-              setProgress(0);
 
-              const start = Date.now();
-              const interval = setInterval(() => {
-                const elapsed = Date.now() - start;
-                const percent = Math.min(elapsed / 8000, 1);
-                setProgress(percent);
-
-                if (percent === 1) {
-                  clearInterval(interval);
-                  setShowStartButton(true);
-                }
-              }, 16);
+              setTimeout(() => {
+                setShowStartButton(true);
+              }, 8000);
             }}
             className="px-10 py-4 border border-cyan-400 text-cyan-400 rounded-2xl hover:bg-cyan-400 hover:text-black transition"
           >
@@ -366,7 +364,8 @@ export default function Home() {
         <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-xl px-16 py-14 text-center">
           <h1 className="text-3xl font-semibold mb-6 tracking-wide">Experiment completed.</h1>
           <p className="text-lg text-gray-300 mt-4">
-            Total time: <span className="text-cyan-400 font-semibold">
+            Total time:{" "}
+            <span className="text-cyan-400 font-semibold">
               {minutes}m {seconds}s
             </span>
           </p>
@@ -378,13 +377,7 @@ export default function Home() {
           </p>
 
           <button
-            onClick={() => {
-              if (!participantId) return;
-              window.location.href =
-                `${QUALTRICS_RETURN_URL}` +
-                `?participant_id=${encodeURIComponent(participantId)}` +
-                `&condition_id=${encodeURIComponent(conditionId)}`;
-            }}
+            onClick={goBackToQuestionnaire}
             className="mt-8 px-8 py-3 rounded-2xl bg-white text-black font-medium hover:bg-gray-200 transition"
           >
             Back to Questionnaire
