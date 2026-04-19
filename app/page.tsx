@@ -22,6 +22,9 @@ const competitiveQuestions = [1, 2, 3, 4, 5, 6, 9, 11];
 const wrongAIQuestions = [1, 3, 4];
 const QUESTION_TIME_LIMIT = 30;
 
+const conditionId = "2"; //
+const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
+
 type TimerRef = {
   current: ReturnType<typeof setTimeout> | ReturnType<typeof setInterval> | null;
 };
@@ -46,6 +49,8 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
 
+  const [participantId, setParticipantId] = useState<string>("");
+
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const userFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const aiFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,6 +63,18 @@ export default function Home() {
   const aiAnsweredRef = useRef(false);
   const humanCorrectRef = useRef(false);
   const aiCorrectRef = useRef(false);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("participant_id");
+    if (saved) {
+      setParticipantId(saved);
+      return;
+    }
+
+    const id = crypto.randomUUID();
+    window.localStorage.setItem("participant_id", id);
+    setParticipantId(id);
+  }, []);
 
   function clearTimer(ref: TimerRef) {
     if (ref.current) {
@@ -202,6 +219,21 @@ export default function Home() {
     return () => clearTimeout(timeout);
   }, [current, started]);
 
+  useEffect(() => {
+    if (!started) return;
+    if (current < questions.length) return;
+    if (!participantId) return;
+
+    const timer = setTimeout(() => {
+      window.location.href =
+        `${QUALTRICS_RETURN_URL}` +
+        `?participant_id=${encodeURIComponent(participantId)}` +
+        `&condition_id=${encodeURIComponent(conditionId)}`;
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [current, started, participantId]);
+
   function handleAnswer(index: number) {
     const question = questions[current];
     if (!question) return;
@@ -282,9 +314,19 @@ export default function Home() {
             </div>
 
             <div className="mt-6 space-y-2 text-lg text-white text-left pl-6">
-              <p>There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point, and both of you move on to the next question.</p>
-              <p>You will have 30 seconds per question. The upper left corner shows the question number. The upper right corner shows the countdown timer and both scores.</p>
-              <p>A green check mark indicates a correct answer, and a red cross mark indicates an incorrect answer. The AI agent’s responses and feedback will also be visible on the same screen.</p>
+              <p>
+                There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions
+                at the same time. The first to answer correctly earns 1 point, and both of you move on to the
+                next question.
+              </p>
+              <p>
+                You will have 30 seconds per question. The upper left corner shows the question number. The
+                upper right corner shows the countdown timer and both scores.
+              </p>
+              <p>
+                A green check mark indicates a correct answer, and a red cross mark indicates an incorrect answer.
+                The AI agent’s responses and feedback will also be visible on the same screen.
+              </p>
               <p>Your final score will be compared with the AI’s score. Please solve as many problems as you can.</p>
             </div>
 
@@ -323,15 +365,30 @@ export default function Home() {
       <div className="min-h-screen bg-black flex items-center justify-center px-6">
         <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-xl px-16 py-14 text-center">
           <h1 className="text-3xl font-semibold mb-6 tracking-wide">Experiment completed.</h1>
-          <p className="text-lg text-gray-700 mt-4">
-            Total time: <span className="text-cyan-400 font-semibold">{minutes}m {seconds}s</span>
+          <p className="text-lg text-gray-300 mt-4">
+            Total time: <span className="text-cyan-400 font-semibold">
+              {minutes}m {seconds}s
+            </span>
           </p>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-gray-300">
             Your score: <span className="text-cyan-400 font-semibold">{score}</span>
           </p>
-          <p className="text-xl text-gray-600">
-            AI's score: <span className="text-red-400 font-semibold">{opponentScore}</span>
+          <p className="text-xl text-gray-300">
+            AI&apos;s score: <span className="text-red-400 font-semibold">{opponentScore}</span>
           </p>
+
+          <button
+            onClick={() => {
+              if (!participantId) return;
+              window.location.href =
+                `${QUALTRICS_RETURN_URL}` +
+                `?participant_id=${encodeURIComponent(participantId)}` +
+                `&condition_id=${encodeURIComponent(conditionId)}`;
+            }}
+            className="mt-8 px-8 py-3 rounded-2xl bg-white text-black font-medium hover:bg-gray-200 transition"
+          >
+            Back to Questionnaire
+          </button>
         </div>
       </div>
     );
@@ -346,7 +403,7 @@ export default function Home() {
           <p className="text-xs tracking-widest text-cyan-400">QUESTION</p>
           <p className="text-2xl font-bold">
             {current + 1}
-            <span className="text-sm text-gray-600 ml-2">/ {questions.length}</span>
+            <span className="text-sm text-gray-300 ml-2">/ {questions.length}</span>
           </p>
         </div>
       </div>
@@ -367,7 +424,7 @@ export default function Home() {
 
       <div className="absolute top-28 right-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl border border-cyan-400">
         <div className="text-center">
-          <p className="text-xs tracking-widest text-cyan-400">AI's Score</p>
+          <p className="text-xs tracking-widest text-cyan-400">AI&apos;s Score</p>
           <p className="text-2xl font-bold text-red-400">{opponentScore}</p>
         </div>
       </div>
