@@ -286,7 +286,7 @@ export default function Home() {
               const start = Date.now();
               const interval = setInterval(() => {
                 const elapsed = Date.now() - start;
-                const percent = Math.min(elapsed / 4000, 1);
+                const percent = Math.min(elapsed / 8000, 1);
                 setProgress(percent);
 
                 if (percent === 1) {
