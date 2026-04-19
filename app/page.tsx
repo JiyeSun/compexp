@@ -286,7 +286,7 @@ export default function Home() {
               const start = Date.now();
               const interval = setInterval(() => {
                 const elapsed = Date.now() - start;
-                const percent = Math.min(elapsed / 2000, 1);
+                const percent = Math.min(elapsed / 4000, 1);
                 setProgress(percent);
 
                 if (percent === 1) {
@@ -346,7 +346,7 @@ export default function Home() {
                   setStarted(true);
                   setExperimentStartTime(Date.now());
                 }}
-                className="px-10 py-4 bg-black/80 backdrop-blur-md text-cyan-400 rounded-2xl border border-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.3)] tracking-widest text-lg hover:bg-cyan-400 hover:text-black hover:shadow-[0_0_25px_rgba(0,255,255,0.8)] hover:scale-105 active:scale-95 transition-all duration-600"
+                className="px-10 py-4 bg-black/80 backdrop-blur-md text-cyan-400 rounded-2xl border border-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.3)] tracking-widest text-lg hover:bg-cyan-400 hover:text-black hover:shadow-[0_0_25px_rgba(0,255,255,0.8)] hover:scale-105 active:scale-95 transition-all duration-300"
               >
                 READY!
               </button>
