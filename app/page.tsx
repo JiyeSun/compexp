@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 
 const questions = [
@@ -22,8 +23,28 @@ const competitiveQuestions = [1, 2, 3, 4, 5, 6, 9, 11];
 const wrongAIQuestions = [1, 3, 4];
 const QUESTION_TIME_LIMIT = 30;
 
-const conditionId = "2";
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
+const GOOGLE_APPS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbw7pWaJ6mB-7znIEVzZB_1YOMu-7hUK-mv1FObCrELamIgCoMGaRTk4NyZkMeweU84taQ/exec";
+
+type TrialRecord = {
+  rid: string;
+  question_number: number;
+  chosen_option: number | null;
+  correct_option: number;
+  rt_seconds: number;
+  ended_by_timeout: boolean;
+  saved_at: string;
+  answer_count: number;
+};
+
+type SummaryRecord = {
+  rid: string;
+  total_score: number;
+  total_time_seconds: number;
+  n_trials: number;
+  saved_at: string;
+};
 
 type TimerRef = {
   current: ReturnType<typeof setTimeout> | ReturnType<typeof setInterval> | null;
@@ -47,12 +68,18 @@ export default function Home() {
   const [showCover, setShowCover] = useState(true);
   const [showStartButton, setShowStartButton] = useState(false);
   const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
-  const [participantId, setParticipantId] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const [rid] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("rid") ?? "";
+  });
 
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const userFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const aiFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoReturnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const questionResolvedRef = useRef(false);
   const inputLockedRef = useRef(false);
@@ -62,17 +89,23 @@ export default function Home() {
   const humanCorrectRef = useRef(false);
   const aiCorrectRef = useRef(false);
 
-  useEffect(() => {
-    const saved = window.localStorage.getItem("participant_id");
-    if (saved) {
-      setParticipantId(saved);
-      return;
-    }
+  const questionStartTimeRef = useRef<number>(0);
+  const trialsRef = useRef<TrialRecord[]>([]);
+  const currentTrialRef = useRef<TrialRecord | null>(null);
+  const currentTrialCommittedRef = useRef(false);
+  const saveLockRef = useRef(false);
 
-    const id = crypto.randomUUID();
-    window.localStorage.setItem("participant_id", id);
-    setParticipantId(id);
-  }, []);
+  useEffect(() => {
+    if (!started || current >= questions.length) return;
+
+    const interval = setInterval(() => {
+      if (experimentStartTime) {
+        setTotalTime(Math.floor((Date.now() - experimentStartTime) / 1000));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [started, experimentStartTime, current]);
 
   function clearTimer(ref: TimerRef) {
     if (ref.current) {
@@ -94,12 +127,54 @@ export default function Home() {
     setShowWrongMark(false);
     setAiAnswerIndex(null);
     setAutoAnswered(false);
+
     questionResolvedRef.current = false;
     inputLockedRef.current = false;
     humanAnsweredRef.current = false;
     aiAnsweredRef.current = false;
     humanCorrectRef.current = false;
     aiCorrectRef.current = false;
+
+    currentTrialRef.current = null;
+    currentTrialCommittedRef.current = false;
+  }
+
+  function initializeCurrentTrial() {
+    const question = questions[current];
+    currentTrialRef.current = {
+      rid,
+      question_number: current + 1,
+      chosen_option: null,
+      correct_option: question.correct,
+      rt_seconds: 0,
+      ended_by_timeout: false,
+      saved_at: "",
+      answer_count: 0,
+    };
+    currentTrialCommittedRef.current = false;
+  }
+
+  function updateCurrentTrialAttempt(index: number, rtSeconds: number) {
+    if (!currentTrialRef.current) return;
+
+    currentTrialRef.current.chosen_option = index;
+    currentTrialRef.current.rt_seconds = Number(rtSeconds.toFixed(3));
+    currentTrialRef.current.answer_count += 1;
+    currentTrialRef.current.ended_by_timeout = false;
+  }
+
+  function commitCurrentTrial(endedByTimeout: boolean) {
+    if (currentTrialCommittedRef.current) return;
+    if (!currentTrialRef.current) return;
+
+    const finalTrial: TrialRecord = {
+      ...currentTrialRef.current,
+      ended_by_timeout: endedByTimeout,
+      saved_at: new Date().toISOString(),
+    };
+
+    trialsRef.current = [...trialsRef.current, finalTrial];
+    currentTrialCommittedRef.current = true;
   }
 
   function advanceQuestion() {
@@ -122,9 +197,12 @@ export default function Home() {
 
     questionResolvedRef.current = true;
     inputLockedRef.current = true;
+
     clearTimer(countdownRef);
     clearTimer(userFeedbackTimeoutRef);
     clearTimer(aiFeedbackTimeoutRef);
+
+    commitCurrentTrial(false);
     scheduleAdvance(delayMs);
   }
 
@@ -133,19 +211,26 @@ export default function Home() {
 
     clearAllTimers();
     resetQuestionState();
+
     setTimeLeft(QUESTION_TIME_LIMIT);
+    questionStartTimeRef.current = Date.now();
+    initializeCurrentTrial();
 
     countdownRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearTimer(countdownRef);
+
           if (!questionResolvedRef.current) {
             questionResolvedRef.current = true;
             inputLockedRef.current = true;
+            commitCurrentTrial(true);
             scheduleAdvance(0);
           }
+
           return QUESTION_TIME_LIMIT;
         }
+
         return prev - 1;
       });
     }, 1000);
@@ -194,12 +279,14 @@ export default function Home() {
         }
 
         inputLockedRef.current = true;
+
         clearTimer(aiFeedbackTimeoutRef);
         aiFeedbackTimeoutRef.current = setTimeout(() => {
           setAutoAnswered(false);
           setAiAnswerIndex(null);
           inputLockedRef.current = false;
         }, 800);
+
         return;
       }
 
@@ -210,35 +297,121 @@ export default function Home() {
 
       questionResolvedRef.current = true;
       inputLockedRef.current = true;
+
       clearTimer(countdownRef);
+      commitCurrentTrial(false);
       scheduleAdvance(800);
     }, reactionTime);
 
     return () => clearTimeout(timeout);
   }, [current, started]);
 
+  function postToGoogleSheet(payload: Record<string, string>) {
+    return new Promise<void>((resolve, reject) => {
+      const iframeName = `gs-submit-frame-${Date.now()}`;
+
+      const iframe = document.createElement("iframe");
+      iframe.name = iframeName;
+      iframe.style.display = "none";
+
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = GOOGLE_APPS_SCRIPT_URL;
+      form.target = iframeName;
+      form.style.display = "none";
+
+      Object.entries(payload).forEach(([key, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      });
+
+      let submitted = false;
+
+      const cleanup = () => {
+        window.clearTimeout(timeoutId);
+        form.remove();
+        iframe.remove();
+      };
+
+      const timeoutId = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("Google Sheets submission timed out"));
+      }, 15000);
+
+      iframe.onload = () => {
+        if (!submitted) return;
+        cleanup();
+        resolve();
+      };
+
+      document.body.appendChild(iframe);
+      document.body.appendChild(form);
+
+      submitted = true;
+      form.submit();
+    });
+  }
+
+  async function saveAndReturnToQualtrics() {
+    if (saveLockRef.current) return;
+    saveLockRef.current = true;
+    setIsSubmitting(true);
+
+    try {
+      if (autoReturnTimerRef.current) {
+        clearTimeout(autoReturnTimerRef.current);
+        autoReturnTimerRef.current = null;
+      }
+
+      const finalTotalTime =
+        experimentStartTime !== null
+          ? Math.floor((Date.now() - experimentStartTime) / 1000)
+          : totalTime;
+
+      const summary: SummaryRecord = {
+        rid,
+        total_score: score,
+        total_time_seconds: finalTotalTime,
+        n_trials: trialsRef.current.length,
+        saved_at: new Date().toISOString(),
+      };
+
+      await postToGoogleSheet({
+        rid,
+        summary_json: JSON.stringify(summary),
+        trials_json: JSON.stringify(trialsRef.current),
+      });
+
+      window.location.href = QUALTRICS_RETURN_URL;
+    } catch (error) {
+      console.error(error);
+      alert("Saving data failed. Please try again.");
+      saveLockRef.current = false;
+      setIsSubmitting(false);
+    }
+  }
+
   useEffect(() => {
     if (!started) return;
     if (current < questions.length) return;
-    if (!participantId) return;
 
-    const timer = setTimeout(() => {
-      window.location.href =
-        `${QUALTRICS_RETURN_URL}` +
-        `?participant_id=${encodeURIComponent(participantId)}` +
-        `&condition_id=${encodeURIComponent(conditionId)}`;
+    autoReturnTimerRef.current = setTimeout(() => {
+      void saveAndReturnToQualtrics();
     }, 2000);
 
-    return () => clearTimeout(timer);
-  }, [current, started, participantId]);
+    return () => {
+      if (autoReturnTimerRef.current) {
+        clearTimeout(autoReturnTimerRef.current);
+        autoReturnTimerRef.current = null;
+      }
+    };
+  }, [current, started]);
 
   function goBackToQuestionnaire() {
-    if (!participantId) return;
-
-    window.location.href =
-      `${QUALTRICS_RETURN_URL}` +
-      `?participant_id=${encodeURIComponent(participantId)}` +
-      `&condition_id=${encodeURIComponent(conditionId)}`;
+    void saveAndReturnToQualtrics();
   }
 
   function handleAnswer(index: number) {
@@ -247,17 +420,24 @@ export default function Home() {
     if (questionResolvedRef.current || inputLockedRef.current) return;
 
     humanAnsweredRef.current = true;
-    setSelectedIndex(index);
 
+    const rtSeconds = Math.max(0, (Date.now() - questionStartTimeRef.current) / 1000);
     const isCorrect = index === question.correct;
+
+    setSelectedIndex(index);
     humanCorrectRef.current = isCorrect;
+
+    updateCurrentTrialAttempt(index, rtSeconds);
 
     if (isCorrect) {
       setScore((prev) => prev + 1);
       setShowWrongMark(false);
+
       questionResolvedRef.current = true;
       inputLockedRef.current = true;
+
       clearTimer(countdownRef);
+      commitCurrentTrial(false);
       scheduleAdvance(1500);
       return;
     }
@@ -327,11 +507,7 @@ export default function Home() {
               </p>
               <p>Your final score will be compared with the AI’s score. Please solve as many problems as you can.</p>
             </div>
-
-            <p className="mt-6 text-cyan-400 text-xl font-semibold"></p>
           </div>
-
-          <p className="text-gray-600 leading-relaxed mb-8 text-lg max-w-xl mx-auto"></p>
 
           <div className="flex flex-col items-center justify-center mt-6">
             {!showStartButton && (
@@ -363,24 +539,28 @@ export default function Home() {
       <div className="min-h-screen bg-black flex items-center justify-center px-6">
         <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-xl px-16 py-14 text-center">
           <h1 className="text-3xl font-semibold mb-6 tracking-wide">Experiment completed.</h1>
+
           <p className="text-lg text-gray-300 mt-4">
             Total time:{" "}
             <span className="text-cyan-400 font-semibold">
               {minutes}m {seconds}s
             </span>
           </p>
+
           <p className="text-xl text-gray-300">
             Your score: <span className="text-cyan-400 font-semibold">{score}</span>
           </p>
+
           <p className="text-xl text-gray-300">
             AI&apos;s score: <span className="text-red-400 font-semibold">{opponentScore}</span>
           </p>
 
           <button
             onClick={goBackToQuestionnaire}
-            className="mt-8 px-8 py-3 rounded-2xl bg-white text-black font-medium hover:bg-gray-200 transition"
+            disabled={isSubmitting}
+            className="mt-8 px-8 py-3 rounded-2xl bg-white text-black font-medium hover:bg-gray-200 transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Back to Questionnaire
+            {isSubmitting ? "Saving..." : "Back to Questionnaire"}
           </button>
         </div>
       </div>
