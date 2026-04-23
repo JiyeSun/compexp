@@ -24,7 +24,7 @@ const wrongAIQuestions = [1, 3, 4];
 
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
 const GOOGLE_APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyEb4x2mOslt3fDEO3xGTub5CVE8FoyIGxXpaYeqROnf8eKO7C-Ml9Ibyo_yw9JQhUBgA/exec";
+  "https://script.google.com/macros/s/AKfycbxCB4h577IBt9cJT9xnlU94bY4PooDHZMMUbvVPPAOnotTuoANtESXCrVgkD5UOeDa95Q/exec";
 
 type TrialRecord = {
   rid: string;
