@@ -86,16 +86,31 @@ export default function Home() {
 
   const humanAnsweredRef = useRef(false);
   const aiAnsweredRef = useRef(false);
+  const humanCorrectRef = useRef(false);
+  const aiCorrectRef = useRef(false);
 
   const questionStartTimeRef = useRef<number>(0);
   const trialsRef = useRef<TrialRecord[]>([]);
   const currentTrialRef = useRef<TrialRecord | null>(null);
   const currentTrialCommittedRef = useRef(false);
+  const saveLockRef = useRef(false);
+
+  useEffect(() => {
+    if (!started || current >= questions.length) return;
+
+    const interval = setInterval(() => {
+      if (experimentStartTime) {
+        setTotalTime(Math.floor((Date.now() - experimentStartTime) / 1000));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [started, experimentStartTime, current]);
 
   function clearTimer(ref: TimerRef) {
     if (ref.current) {
-      clearTimeout(ref.current as any);
-      clearInterval(ref.current as any);
+      clearTimeout(ref.current as ReturnType<typeof setTimeout>);
+      clearInterval(ref.current as ReturnType<typeof setInterval>);
       ref.current = null;
     }
   }
@@ -117,6 +132,8 @@ export default function Home() {
     inputLockedRef.current = false;
     humanAnsweredRef.current = false;
     aiAnsweredRef.current = false;
+    humanCorrectRef.current = false;
+    aiCorrectRef.current = false;
 
     currentTrialRef.current = null;
     currentTrialCommittedRef.current = false;
@@ -134,6 +151,14 @@ export default function Home() {
       saved_at: "",
     };
     currentTrialCommittedRef.current = false;
+  }
+
+  function updateCurrentTrialAttempt(index: number, rtSeconds: number) {
+    if (!currentTrialRef.current) return;
+
+    currentTrialRef.current.chosen_option = index;
+    currentTrialRef.current.rt_seconds = Number(rtSeconds.toFixed(3));
+    currentTrialRef.current.ended_by_timeout = false;
   }
 
   function commitCurrentTrial(endedByTimeout: boolean) {
@@ -177,21 +202,42 @@ export default function Home() {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearTimer(countdownRef);
-          commitCurrentTrial(true);
-          scheduleAdvance(0);
+
+          if (!questionResolvedRef.current) {
+            questionResolvedRef.current = true;
+            inputLockedRef.current = true;
+            commitCurrentTrial(true);
+            scheduleAdvance(0);
+          }
+
           return QUESTION_TIME_LIMIT;
         }
+
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearAllTimers();
+    return () => {
+      clearAllTimers();
+    };
   }, [started, current]);
+
+  useEffect(() => {
+    if (!started || current >= questions.length) return;
+    if (!experimentStartTime) return;
+
+    const interval = setInterval(() => {
+      setTotalTime(Math.floor((Date.now() - experimentStartTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [started, experimentStartTime, current]);
 
   useEffect(() => {
     if (!started || current >= questions.length) return;
 
     const question = questions[current];
+    if (!question) return;
     if (!competitiveQuestions.includes(question.id)) return;
 
     const reactionTime = 4000 + Math.random() * 2000;
@@ -199,32 +245,29 @@ export default function Home() {
     const timeout = setTimeout(() => {
       if (questionResolvedRef.current) return;
 
-      aiAnsweredRef.current = true;
       const isWrong = wrongAIQuestions.includes(question.id);
+      aiAnsweredRef.current = true;
 
       if (isWrong) {
         const wrongIndex = (question.correct + 1) % 6;
+        aiCorrectRef.current = false;
         setAiAnswerIndex(wrongIndex);
         setAutoAnswered(true);
 
         if (humanAnsweredRef.current) {
           questionResolvedRef.current = true;
           inputLockedRef.current = true;
+          clearTimer(countdownRef);
           commitCurrentTrial(false);
           scheduleAdvance(800);
           return;
         }
 
         inputLockedRef.current = false;
-
-        aiFeedbackTimeoutRef.current = setTimeout(() => {
-          setAutoAnswered(false);
-          setAiAnswerIndex(null);
-        }, 800);
-
         return;
       }
 
+      aiCorrectRef.current = true;
       setAiAnswerIndex(question.correct);
       setOpponentScore((prev) => prev + 1);
       setAutoAnswered(true);
@@ -240,10 +283,120 @@ export default function Home() {
     return () => clearTimeout(timeout);
   }, [current, started]);
 
+  function postToGoogleSheet(payload: Record<string, string>) {
+    return new Promise<void>((resolve, reject) => {
+      const iframeName = `gs-submit-frame-${Date.now()}`;
+
+      const iframe = document.createElement("iframe");
+      iframe.name = iframeName;
+      iframe.style.display = "none";
+
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = GOOGLE_APPS_SCRIPT_URL;
+      form.target = iframeName;
+      form.style.display = "none";
+
+      Object.entries(payload).forEach(([key, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      });
+
+      let submitted = false;
+
+      const cleanup = () => {
+        window.clearTimeout(timeoutId);
+        form.remove();
+        iframe.remove();
+      };
+
+      const timeoutId = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("Google Sheets submission timed out"));
+      }, 15000);
+
+      iframe.onload = () => {
+        if (!submitted) return;
+        cleanup();
+        resolve();
+      };
+
+      document.body.appendChild(iframe);
+      document.body.appendChild(form);
+
+      submitted = true;
+      form.submit();
+    });
+  }
+
+  async function saveAndReturnToQualtrics() {
+    if (saveLockRef.current) return;
+    saveLockRef.current = true;
+    setIsSubmitting(true);
+
+    try {
+      if (autoReturnTimerRef.current) {
+        clearTimeout(autoReturnTimerRef.current);
+        autoReturnTimerRef.current = null;
+      }
+
+      const finalTotalTime =
+        experimentStartTime !== null
+          ? Math.floor((Date.now() - experimentStartTime) / 1000)
+          : totalTime;
+
+      const summary: SummaryRecord = {
+        rid,
+        total_score: score,
+        ai_score: opponentScore,
+        total_time_seconds: finalTotalTime,
+        n_trials: trialsRef.current.length,
+        saved_at: new Date().toISOString(),
+      };
+
+      await postToGoogleSheet({
+        rid,
+        summary_json: JSON.stringify(summary),
+        trials_json: JSON.stringify(trialsRef.current),
+      });
+
+      window.location.href = QUALTRICS_RETURN_URL;
+    } catch (error) {
+      console.error(error);
+      alert("Saving data failed. Please try again.");
+      saveLockRef.current = false;
+      setIsSubmitting(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!started) return;
+    if (current < questions.length) return;
+
+    autoReturnTimerRef.current = setTimeout(() => {
+      void saveAndReturnToQualtrics();
+    }, 2000);
+
+    return () => {
+      if (autoReturnTimerRef.current) {
+        clearTimeout(autoReturnTimerRef.current);
+        autoReturnTimerRef.current = null;
+      }
+    };
+  }, [current, started]);
+
+  function goBackToQuestionnaire() {
+    void saveAndReturnToQualtrics();
+  }
+
   function handleAnswer(index: number) {
     const question = questions[current];
     if (!question) return;
     if (questionResolvedRef.current || inputLockedRef.current) return;
+    if (humanAnsweredRef.current) return;
 
     humanAnsweredRef.current = true;
 
@@ -251,21 +404,20 @@ export default function Home() {
     const isCorrect = index === question.correct;
 
     setSelectedIndex(index);
+    humanCorrectRef.current = isCorrect;
 
-    if (currentTrialRef.current) {
-      currentTrialRef.current.chosen_option = index;
-      currentTrialRef.current.rt_seconds = Number(rtSeconds.toFixed(3));
-    }
+    updateCurrentTrialAttempt(index, rtSeconds);
 
     if (isCorrect) {
       setScore((prev) => prev + 1);
+      setShowWrongMark(false);
 
       questionResolvedRef.current = true;
       inputLockedRef.current = true;
 
       clearTimer(countdownRef);
       commitCurrentTrial(false);
-      scheduleAdvance(800);
+      scheduleAdvance(1500);
       return;
     }
 
@@ -274,13 +426,198 @@ export default function Home() {
 
     if (aiAnsweredRef.current) {
       questionResolvedRef.current = true;
+      clearTimer(countdownRef);
       commitCurrentTrial(false);
       scheduleAdvance(800);
+      return;
     }
-
-    userFeedbackTimeoutRef.current = setTimeout(() => {
-      setShowWrongMark(false);
-    }, 1500);
   }
 
-  // === 其他 UI / 页面 完全保持原样（未改） ===
+  if (showCover) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-center">
+          <h1 className="text-4xl font-bold mb-8">Pattern Reasoning Challenge</h1>
+
+          <button
+            onClick={() => {
+              setShowCover(false);
+              setShowStartButton(false);
+
+              setTimeout(() => {
+                setShowStartButton(true);
+              }, 25000);
+            }}
+            className="px-10 py-4 border border-cyan-400 text-cyan-400 rounded-2xl hover:bg-cyan-400 hover:text-black transition"
+          >
+            BEGIN
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!started) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-2xl p-12 text-center">
+          <div className="text-center">
+            <div className="text-4xl font-bold mb-4">
+              <p>RULES</p>
+            </div>
+
+            <div className="mt-6 space-y-2 text-lg text-white text-left pl-6">
+              <p>
+                There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions
+                at the same time. The first to answer correctly earns 1 point, and both of you move on to the
+                next question.
+              </p>
+              <p>
+                You will have 30 seconds per question. The upper left corner shows the question number. The
+                upper right corner shows the countdown timer and both scores.
+              </p>
+              <p>
+                A green check mark indicates a correct answer, and a red cross mark indicates an incorrect answer.
+                The AI agent’s responses and feedback will also be visible on the same screen.
+              </p>
+              <p>Your final score will be compared with the AI’s score. Please solve as many problems as you can.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center justify-center mt-6">
+            {!showStartButton && (
+              <p className="text-gray-500 animate-pulse mb-4 text-lg tracking-wide">Preparing challenge...</p>
+            )}
+
+            {showStartButton && (
+              <button
+                onClick={() => {
+                  setStarted(true);
+                  setExperimentStartTime(Date.now());
+                }}
+                className="px-10 py-4 bg-black/80 backdrop-blur-md text-cyan-400 rounded-2xl border border-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.3)] tracking-widest text-lg hover:bg-cyan-400 hover:text-black hover:shadow-[0_0_25px_rgba(0,255,255,0.8)] hover:scale-105 active:scale-95 transition-all duration-300"
+              >
+                READY!
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (current >= questions.length) {
+    const minutes = Math.floor(totalTime / 60);
+    const seconds = totalTime % 60;
+
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-xl px-16 py-14 text-center">
+          <h1 className="text-3xl font-semibold mb-6 tracking-wide">Experiment completed.</h1>
+
+          <p className="text-lg text-gray-300 mt-4">
+            Total time:{" "}
+            <span className="text-cyan-400 font-semibold">
+              {minutes}m {seconds}s
+            </span>
+          </p>
+
+          <p className="text-xl text-gray-300">
+            Your score: <span className="text-cyan-400 font-semibold">{score}</span>
+          </p>
+
+          <p className="text-xl text-gray-300">
+            AI&apos;s score: <span className="text-red-400 font-semibold">{opponentScore}</span>
+          </p>
+
+          <button
+            onClick={goBackToQuestionnaire}
+            disabled={isSubmitting}
+            className="mt-8 px-8 py-3 rounded-2xl bg-white text-black font-medium hover:bg-gray-200 transition disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? "Saving..." : "Back to Questionnaire"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const question = questions[current];
+
+  return (
+    <div className="h-screen flex flex-col items-center justify-center relative font-sans">
+      <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl border border-cyan-400">
+        <div className="text-center">
+          <p className="text-xs tracking-widest text-cyan-400">QUESTION</p>
+          <p className="text-2xl font-bold">
+            {current + 1}
+            <span className="text-sm text-gray-300 ml-2">/ {questions.length}</span>
+          </p>
+        </div>
+      </div>
+
+      <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl flex gap-8 items-center border border-cyan-400">
+        <div className="text-center">
+          <p className="text-xs tracking-widest text-cyan-400">YOUR SCORE</p>
+          <p className="text-2xl font-bold text-green-400">{score}</p>
+        </div>
+
+        <div className="text-center">
+          <p className="text-xs tracking-widest text-cyan-400">TIME</p>
+          <p className={`text-2xl font-bold ${timeLeft <= 10 ? "text-red-500 animate-pulse" : "text-white"}`}>
+            {timeLeft}s
+          </p>
+        </div>
+      </div>
+
+      <div className="absolute top-28 right-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl border border-cyan-400">
+        <div className="text-center">
+          <p className="text-xs tracking-widest text-cyan-400">AI&apos;s Score</p>
+          <p className="text-2xl font-bold text-red-400">{opponentScore}</p>
+        </div>
+      </div>
+
+      <img src={`/images/q${question.id}.png`} alt="question" className="mb-6 max-w-xl" />
+
+      <div className="grid grid-cols-6 gap-6">
+        {generateOptions(question.id).map((option, index) => (
+          <div key={index} className="relative">
+            <img
+              src={option}
+              alt="option"
+              onClick={() => handleAnswer(index)}
+              className={`w-24 h-24 object-contain transition
+                ${autoAnswered && index === aiAnswerIndex ? "ring-4 ring-red-500 scale-110" : ""}
+                ${selectedIndex === index ? "ring-4 ring-cyan-400 scale-110" : "cursor-pointer hover:scale-105"}
+              `}
+            />
+
+            {selectedIndex === index && showWrongMark && (
+              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
+                <span className="text-red-600 text-7xl font-bold">✕</span>
+              </div>
+            )}
+
+            {selectedIndex === index && !showWrongMark && index === question.correct && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-green-500 text-6xl font-bold">✓</span>
+              </div>
+            )}
+
+            {autoAnswered && index === aiAnswerIndex && aiAnswerIndex !== question.correct && (
+              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
+                <span className="text-red-600 text-7xl font-bold">✕</span>
+              </div>
+            )}
+
+            {autoAnswered && index === aiAnswerIndex && aiAnswerIndex === question.correct && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-green-500 text-6xl font-bold">✓</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
