@@ -19,8 +19,8 @@ const questions = [
   { id: 14, correct: 1 },
 ];
 
-const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-const wrongAIQuestions = [1, 3, 4, 8, 9, 13];
+const competitiveQuestions = [1, 2, 3, 4, 5, 6, 9, 11];
+const wrongAIQuestions = [1, 3, 4];
 const QUESTION_TIME_LIMIT = 30;
 
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
@@ -556,7 +556,13 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl flex gap-8 items-center border border-cyan-400">
+      {/* 合并后的右上角 */}
+      <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl flex gap-10 items-center border border-cyan-400">
+        <div className="text-center">
+          <p className="text-xs tracking-widest text-cyan-400">AI'S SCORE</p>
+          <p className="text-2xl font-bold text-red-400">{opponentScore}</p>
+        </div>
+
         <div className="text-center">
           <p className="text-xs tracking-widest text-cyan-400">YOUR SCORE</p>
           <p className="text-2xl font-bold text-green-400">{score}</p>
@@ -570,15 +576,9 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="absolute top-28 right-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl border border-cyan-400">
-        <div className="text-center">
-          <p className="text-xs tracking-widest text-cyan-400">AI&apos;s Score</p>
-          <p className="text-2xl font-bold text-red-400">{opponentScore}</p>
-        </div>
-      </div>
-
       <img src={`/images/q${question.id}.png`} alt="question" className="mb-6 max-w-xl" />
 
+      {/* 强化后的选项 UI */}
       <div className="grid grid-cols-6 gap-6">
         {generateOptions(question.id).map((option, index) => (
           <div key={index} className="relative">
@@ -586,33 +586,46 @@ export default function Home() {
               src={option}
               alt="option"
               onClick={() => handleAnswer(index)}
-              className={`w-24 h-24 object-contain transition
-                ${autoAnswered && index === aiAnswerIndex ? "ring-4 ring-red-500 scale-110" : ""}
-                ${selectedIndex === index ? "ring-4 ring-cyan-400 scale-110" : "cursor-pointer hover:scale-105"}
+              className={`w-24 h-24 object-contain transition duration-200
+                ${
+                  selectedIndex === index
+                    ? "ring-4 ring-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.9)] scale-110"
+                    : ""
+                }
+                ${
+                  autoAnswered && index === aiAnswerIndex
+                    ? "ring-4 ring-red-500 shadow-[0_0_20px_rgba(255,0,0,0.9)] scale-110"
+                    : ""
+                }
+                ${
+                  !selectedIndex && !(autoAnswered && index === aiAnswerIndex)
+                    ? "cursor-pointer hover:scale-105"
+                    : ""
+                }
               `}
             />
 
             {selectedIndex === index && showWrongMark && (
-              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
-                <span className="text-red-600 text-7xl font-bold">✕</span>
+              <div className="absolute inset-0 bg-red-500/30 flex items-center justify-center rounded">
+                <span className="text-red-500 text-5xl font-bold">✖</span>
               </div>
             )}
 
             {selectedIndex === index && !showWrongMark && index === question.correct && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-green-500 text-6xl font-bold">✓</span>
+              <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center rounded">
+                <span className="text-green-400 text-5xl font-bold">✓</span>
               </div>
             )}
 
             {autoAnswered && index === aiAnswerIndex && aiAnswerIndex !== question.correct && (
-              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
-                <span className="text-red-600 text-7xl font-bold">✕</span>
+              <div className="absolute inset-0 bg-red-500/30 flex items-center justify-center rounded">
+                <span className="text-red-500 text-5xl font-bold">✖</span>
               </div>
             )}
 
             {autoAnswered && index === aiAnswerIndex && aiAnswerIndex === question.correct && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-green-500 text-6xl font-bold">✓</span>
+              <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center rounded">
+                <span className="text-green-400 text-5xl font-bold">✓</span>
               </div>
             )}
           </div>
