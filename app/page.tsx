@@ -36,10 +36,6 @@ type TrialRecord = {
   saved_at: string;
 };
 
-function generateOptions(id: number) {
-  return Array.from({ length: 6 }, (_, i) => `/images/q${id}_a${i + 1}.png`);
-}
-
 export default function Home() {
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
@@ -50,7 +46,9 @@ export default function Home() {
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isCorrectSelection, setIsCorrectSelection] = useState<boolean | null>(null);
+
   const [aiAnswerIndex, setAiAnswerIndex] = useState<number | null>(null);
+  const [autoAnswered, setAutoAnswered] = useState(false);
 
   const [experimentStartTime, setExperimentStartTime] = useState<number | null>(null);
   const [totalTime, setTotalTime] = useState(0);
@@ -70,12 +68,14 @@ export default function Home() {
 
   const questionStartTimeRef = useRef(0);
   const trialsRef = useRef<TrialRecord[]>([]);
+
   const timerRef = useRef<any>(null);
 
   function resetState() {
     setSelectedIndex(null);
     setIsCorrectSelection(null);
     setAiAnswerIndex(null);
+    setAutoAnswered(false);
 
     answeredOnceRef.current = false;
     questionResolvedRef.current = false;
@@ -195,18 +195,37 @@ export default function Home() {
     }
   }
 
-  if (showCover) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <h1 className="text-white text-4xl font-bold">Pattern Reasoning Challenge</h1>
-      </div>
-    );
+  async function save() {
+    setIsSubmitting(true);
+
+    const total =
+      experimentStartTime !== null
+        ? Math.floor((Date.now() - experimentStartTime) / 1000)
+        : totalTime;
+
+    await fetch(GOOGLE_APPS_SCRIPT_URL, {
+      method: "POST",
+      body: new URLSearchParams({
+        rid,
+        summary_json: JSON.stringify({
+          rid,
+          total_score: score,
+          ai_score: aiScore,
+          total_time_seconds: total,
+          n_trials: trialsRef.current.length,
+          saved_at: new Date().toISOString(),
+        }),
+        trials_json: JSON.stringify(trialsRef.current),
+      }),
+    });
+
+    window.location.href = QUALTRICS_RETURN_URL;
   }
 
-  if (!started) {
+  if (current >= questions.length) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white">
-        {showStartButton && <button onClick={() => setStarted(true)}>READY</button>}
+      <div className="h-screen flex items-center justify-center">
+        <button onClick={save}>{isSubmitting ? "Saving..." : "Finish"}</button>
       </div>
     );
   }
@@ -214,28 +233,7 @@ export default function Home() {
   const q = questions[current];
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center relative">
-
-      {/* ✅ 只改这一块 */}
-      <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl border border-cyan-400 flex items-center gap-8">
-
-        <div className="text-center">
-          <p className="text-xs tracking-widest text-cyan-400">AI's SCORE</p>
-          <p className="text-2xl font-bold text-red-400">{aiScore}</p>
-        </div>
-
-        <div className="text-center">
-          <p className="text-xs tracking-widest text-cyan-400">YOUR SCORE</p>
-          <p className="text-2xl font-bold text-green-400">{score}</p>
-        </div>
-
-        <div className="text-center">
-          <p className="text-xs tracking-widest text-cyan-400">TIME</p>
-          <p className="text-2xl font-bold">{timeLeft}s</p>
-        </div>
-
-      </div>
-
+    <div className="h-screen flex flex-col items-center justify-center">
       <img src={`/images/q${q.id}.png`} className="mb-6" />
 
       <div className="grid grid-cols-6 gap-4">
@@ -244,16 +242,39 @@ export default function Home() {
             <img
               src={opt}
               onClick={() => handleAnswer(i)}
-              className={`w-24 h-24 ${
-                selectedIndex === i ? "ring-8 ring-cyan-400" : ""
-              }`}
+              className={`w-24 h-24
+                ${selectedIndex === i ? "ring-8 ring-cyan-400" : ""}
+                ${autoAnswered && aiAnswerIndex === i ? "ring-8 ring-red-600" : ""}
+              `}
             />
 
+            {/* 用户 */}
             {selectedIndex === i && (
-              <div className={`absolute inset-0 flex items-center justify-center ${
-                isCorrectSelection ? "bg-green-500/20" : "bg-red-500/20"
-              }`}>
-                {isCorrectSelection ? "✓" : "✕"}
+              <div
+                className={`absolute inset-0 flex items-center justify-center rounded
+                  ${isCorrectSelection ? "bg-green-500/20" : "bg-red-500/20"}
+                `}
+              >
+                {isCorrectSelection ? (
+                  <span className="text-green-500 text-5xl">✓</span>
+                ) : (
+                  <span className="text-red-500 text-5xl">✕</span>
+                )}
+              </div>
+            )}
+
+            {/* AI */}
+            {aiAnswerIndex === i && (
+              <div
+                className={`absolute inset-0 flex items-center justify-center rounded
+                  ${i === q.correct ? "bg-green-500/20" : "bg-red-500/20"}
+                `}
+              >
+                {i === q.correct ? (
+                  <span className="text-green-500 text-5xl">✓</span>
+                ) : (
+                  <span className="text-red-500 text-5xl">✕</span>
+                )}
               </div>
             )}
           </div>
