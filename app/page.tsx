@@ -21,10 +21,11 @@ const questions = [
 
 const competitiveQuestions = [1, 2, 3, 4, 5, 6, 9, 11];
 const wrongAIQuestions = [1, 3, 4];
+const QUESTION_TIME_LIMIT = 30;
 
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
 const GOOGLE_APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyEb4x2mOslt3fDEO3xGTub5CVE8FoyIGxXpaYeqROnf8eKO7C-Ml9Ibyo_yw9JQhUBgA/exec";
+  "https://script.google.com/macros/s/AKfycbxCB4h577IBt9cJT9xnlU94bY4PooDHZMMUbvVPPAOnotTuoANtESXCrVgkD5UOeDa95Q/exec";
 
 type TrialRecord = {
   rid: string;
@@ -36,185 +37,309 @@ type TrialRecord = {
   saved_at: string;
 };
 
+type SummaryRecord = {
+  rid: string;
+  total_score: number;
+  ai_score: number;
+  total_time_seconds: number;
+  n_trials: number;
+  saved_at: string;
+};
+
+type TimerRef = {
+  current: ReturnType<typeof setTimeout> | ReturnType<typeof setInterval> | null;
+};
+
+function generateOptions(id: number) {
+  return Array.from({ length: 6 }, (_, i) => `/images/q${id}_a${i + 1}.png`);
+}
+
 export default function Home() {
-  const [current, setCurrent] = useState(0);
-  const [score, setScore] = useState(0);
-  const [aiScore, setAiScore] = useState(0);
-
-  const [timeLeft, setTimeLeft] = useState(30);
-  const [started, setStarted] = useState(false);
-
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [isCorrectSelection, setIsCorrectSelection] = useState<boolean | null>(null);
-
-  const [aiAnswerIndex, setAiAnswerIndex] = useState<number | null>(null);
-  const [autoAnswered, setAutoAnswered] = useState(false);
-
+  const [current, setCurrent] = useState<number>(0);
+  const [score, setScore] = useState<number>(0);
+  const [timeLeft, setTimeLeft] = useState<number>(QUESTION_TIME_LIMIT);
+  const [totalTime, setTotalTime] = useState<number>(0);
   const [experimentStartTime, setExperimentStartTime] = useState<number | null>(null);
-  const [totalTime, setTotalTime] = useState(0);
-
+  const [started, setStarted] = useState<boolean>(false);
+  const [opponentScore, setOpponentScore] = useState<number>(0);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [showWrongMark, setShowWrongMark] = useState<boolean>(false);
+  const [aiAnswerIndex, setAiAnswerIndex] = useState<number | null>(null);
   const [showCover, setShowCover] = useState(true);
   const [showStartButton, setShowStartButton] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const [rid] = useState(() => {
+  const [rid] = useState<string>(() => {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("rid") ?? "";
   });
 
-  const answeredOnceRef = useRef(false);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const userFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const aiFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoReturnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const questionResolvedRef = useRef(false);
+  const inputLockedRef = useRef(false);
+
   const humanAnsweredRef = useRef(false);
+  const aiAnsweredRef = useRef(false);
+  const humanCorrectRef = useRef(false);
+  const aiCorrectRef = useRef(false);
 
-  const questionStartTimeRef = useRef(0);
+  const questionStartTimeRef = useRef<number>(0);
   const trialsRef = useRef<TrialRecord[]>([]);
+  const currentTrialRef = useRef<TrialRecord | null>(null);
+  const currentTrialCommittedRef = useRef(false);
+  const saveLockRef = useRef(false);
 
-  const timerRef = useRef<any>(null);
-
-  function resetState() {
-    setSelectedIndex(null);
-    setIsCorrectSelection(null);
-    setAiAnswerIndex(null);
-    setAutoAnswered(false);
-
-    answeredOnceRef.current = false;
-    questionResolvedRef.current = false;
-    humanAnsweredRef.current = false;
-  }
-
-  function recordTrial(choice: number | null, timeout: boolean) {
-    const q = questions[current];
-    const rt = Math.max(0, (Date.now() - questionStartTimeRef.current) / 1000);
-
-    trialsRef.current.push({
-      rid,
-      question_number: current + 1,
-      chosen_option: choice,
-      correct_option: q.correct,
-      rt_seconds: Number(rt.toFixed(3)),
-      ended_by_timeout: timeout,
-      saved_at: new Date().toISOString(),
-    });
-  }
-
-  function next(delay: number) {
-    setTimeout(() => {
-      resetState();
-      setCurrent((c) => c + 1);
-    }, delay);
-  }
-
-  useEffect(() => {
-    if (!started || current >= questions.length) return;
-
-    resetState();
-    setTimeLeft(30);
-    questionStartTimeRef.current = Date.now();
-
-    timerRef.current = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(timerRef.current);
-          if (!questionResolvedRef.current) {
-            questionResolvedRef.current = true;
-            recordTrial(null, true);
-            next(0);
-          }
-          return 30;
-        }
-        return t - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timerRef.current);
-  }, [current, started]);
-
-  useEffect(() => {
-    if (!started || current >= questions.length) return;
-
-    const q = questions[current];
-    if (!competitiveQuestions.includes(q.id)) return;
-
-    const t = setTimeout(() => {
-      if (questionResolvedRef.current) return;
-
-      const wrong = wrongAIQuestions.includes(q.id);
-
-      if (!humanAnsweredRef.current && !wrong) {
-        setAiAnswerIndex(q.correct);
-        setAiScore((s) => s + 1);
-
-        questionResolvedRef.current = true;
-        recordTrial(null, false);
-        next(800);
-        return;
-      }
-
-      if (wrong) {
-        const wrongIndex = (q.correct + 1) % 6;
-        setAiAnswerIndex(wrongIndex);
-
-        if (!humanAnsweredRef.current) return;
-
-        questionResolvedRef.current = true;
-        recordTrial(selectedIndex, false);
-        next(800);
-        return;
-      }
-
-      setAiAnswerIndex(q.correct);
-      setAiScore((s) => s + 1);
-
-      questionResolvedRef.current = true;
-      recordTrial(selectedIndex, false);
-      next(800);
-    }, 4000 + Math.random() * 2000);
-
-    return () => clearTimeout(t);
-  }, [current, started]);
-
-  function handleAnswer(index: number) {
-    const q = questions[current];
-    if (!q) return;
-    if (questionResolvedRef.current) return;
-    if (answeredOnceRef.current) return;
-
-    answeredOnceRef.current = true;
-    humanAnsweredRef.current = true;
-
-    setSelectedIndex(index);
-
-    const correct = index === q.correct;
-    setIsCorrectSelection(correct);
-
-    if (correct) {
-      setScore((s) => s + 1);
-      questionResolvedRef.current = true;
-      recordTrial(index, false);
-      next(800);
+  function clearTimer(ref: TimerRef) {
+    if (ref.current) {
+      clearTimeout(ref.current as ReturnType<typeof setTimeout>);
+      clearInterval(ref.current as ReturnType<typeof setInterval>);
+      ref.current = null;
     }
   }
 
-  async function save() {
+  function clearAllTimers() {
+    clearTimer(countdownRef);
+    clearTimer(userFeedbackTimeoutRef);
+    clearTimer(aiFeedbackTimeoutRef);
+    clearTimer(advanceTimeoutRef);
+  }
+
+  function resetQuestionState() {
+    setSelectedIndex(null);
+    setShowWrongMark(false);
+    setAiAnswerIndex(null);
+    setAutoAnswered(false);
+
+    questionResolvedRef.current = false;
+    inputLockedRef.current = false;
+    humanAnsweredRef.current = false;
+    aiAnsweredRef.current = false;
+    humanCorrectRef.current = false;
+    aiCorrectRef.current = false;
+
+    currentTrialRef.current = null;
+    currentTrialCommittedRef.current = false;
+  }
+
+  function initializeCurrentTrial() {
+    const question = questions[current];
+    currentTrialRef.current = {
+      rid,
+      question_number: current + 1,
+      chosen_option: null,
+      correct_option: question.correct,
+      rt_seconds: 0,
+      ended_by_timeout: false,
+      saved_at: "",
+    };
+    currentTrialCommittedRef.current = false;
+  }
+
+  function updateCurrentTrialAttempt(index: number, rtSeconds: number) {
+    if (!currentTrialRef.current) return;
+
+    currentTrialRef.current.chosen_option = index;
+    currentTrialRef.current.rt_seconds = Number(rtSeconds.toFixed(3));
+    currentTrialRef.current.ended_by_timeout = false;
+  }
+
+  function commitCurrentTrial(endedByTimeout: boolean) {
+    if (currentTrialCommittedRef.current) return;
+    if (!currentTrialRef.current) return;
+
+    const finalTrial: TrialRecord = {
+      ...currentTrialRef.current,
+      ended_by_timeout: endedByTimeout,
+      saved_at: new Date().toISOString(),
+    };
+
+    trialsRef.current = [...trialsRef.current, finalTrial];
+    currentTrialCommittedRef.current = true;
+  }
+
+  function advanceQuestion() {
+    clearAllTimers();
+    resetQuestionState();
+    setCurrent((prev) => prev + 1);
+  }
+
+  function scheduleAdvance(delayMs: number) {
+    clearTimer(advanceTimeoutRef);
+    advanceTimeoutRef.current = setTimeout(() => {
+      advanceQuestion();
+    }, delayMs);
+  }
+
+  useEffect(() => {
+    if (!started || current >= questions.length) return;
+
+    clearAllTimers();
+    resetQuestionState();
+
+    setTimeLeft(QUESTION_TIME_LIMIT);
+    questionStartTimeRef.current = Date.now();
+    initializeCurrentTrial();
+
+    countdownRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearTimer(countdownRef);
+
+          if (!questionResolvedRef.current) {
+            questionResolvedRef.current = true;
+            inputLockedRef.current = true;
+            commitCurrentTrial(true);
+            scheduleAdvance(0);
+          }
+
+          return QUESTION_TIME_LIMIT;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearAllTimers();
+  }, [started, current]);
+
+  useEffect(() => {
+    if (!started || current >= questions.length) return;
+    if (!experimentStartTime) return;
+
+    const interval = setInterval(() => {
+      setTotalTime(Math.floor((Date.now() - experimentStartTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [started, experimentStartTime, current]);
+
+  useEffect(() => {
+    if (!started || current >= questions.length) return;
+
+    const question = questions[current];
+    if (!question) return;
+    if (!competitiveQuestions.includes(question.id)) return;
+
+    const reactionTime = 4000 + Math.random() * 2000;
+
+    const timeout = setTimeout(() => {
+      if (questionResolvedRef.current) return;
+
+      const isWrong = wrongAIQuestions.includes(question.id);
+      aiAnsweredRef.current = true;
+
+      if (!isWrong) {
+        aiCorrectRef.current = true;
+        setAiAnswerIndex(question.correct);
+        setOpponentScore((prev) => prev + 1);
+        setAutoAnswered(true);
+
+        questionResolvedRef.current = true;
+        inputLockedRef.current = true;
+
+        clearTimer(countdownRef);
+        commitCurrentTrial(false);
+        scheduleAdvance(800);
+        return;
+      }
+
+      const wrongIndex = (question.correct + 1) % 6;
+      aiCorrectRef.current = false;
+      setAiAnswerIndex(wrongIndex);
+      setAutoAnswered(true);
+
+      if (humanAnsweredRef.current) {
+        questionResolvedRef.current = true;
+        inputLockedRef.current = true;
+
+        clearTimer(countdownRef);
+        commitCurrentTrial(false);
+        scheduleAdvance(800);
+        return;
+      }
+
+      inputLockedRef.current = false;
+
+      clearTimer(aiFeedbackTimeoutRef);
+      aiFeedbackTimeoutRef.current = setTimeout(() => {
+        setAutoAnswered(false);
+        setAiAnswerIndex(null);
+      }, 800);
+    }, reactionTime);
+
+    return () => clearTimeout(timeout);
+  }, [current, started]);
+
+  function handleAnswer(index: number) {
+    const question = questions[current];
+    if (!question) return;
+    if (questionResolvedRef.current || inputLockedRef.current) return;
+
+    humanAnsweredRef.current = true;
+
+    const rtSeconds = Math.max(0, (Date.now() - questionStartTimeRef.current) / 1000);
+    const isCorrect = index === question.correct;
+
+    setSelectedIndex(index);
+    humanCorrectRef.current = isCorrect;
+
+    updateCurrentTrialAttempt(index, rtSeconds);
+
+    if (isCorrect) {
+      setScore((prev) => prev + 1);
+
+      questionResolvedRef.current = true;
+      inputLockedRef.current = true;
+
+      clearTimer(countdownRef);
+      commitCurrentTrial(false);
+      scheduleAdvance(800);
+      return;
+    }
+
+    setShowWrongMark(true);
+    inputLockedRef.current = true;
+
+    if (aiAnsweredRef.current) {
+      questionResolvedRef.current = true;
+
+      clearTimer(countdownRef);
+      commitCurrentTrial(false);
+      scheduleAdvance(800);
+      return;
+    }
+  }
+
+  async function saveAndReturnToQualtrics() {
+    if (saveLockRef.current) return;
+    saveLockRef.current = true;
     setIsSubmitting(true);
 
-    const total =
+    const finalTotalTime =
       experimentStartTime !== null
         ? Math.floor((Date.now() - experimentStartTime) / 1000)
         : totalTime;
+
+    const summary: SummaryRecord = {
+      rid,
+      total_score: score,
+      ai_score: opponentScore,
+      total_time_seconds: finalTotalTime,
+      n_trials: trialsRef.current.length,
+      saved_at: new Date().toISOString(),
+    };
 
     await fetch(GOOGLE_APPS_SCRIPT_URL, {
       method: "POST",
       body: new URLSearchParams({
         rid,
-        summary_json: JSON.stringify({
-          rid,
-          total_score: score,
-          ai_score: aiScore,
-          total_time_seconds: total,
-          n_trials: trialsRef.current.length,
-          saved_at: new Date().toISOString(),
-        }),
+        summary_json: JSON.stringify(summary),
         trials_json: JSON.stringify(trialsRef.current),
       }),
     });
@@ -222,64 +347,5 @@ export default function Home() {
     window.location.href = QUALTRICS_RETURN_URL;
   }
 
-  if (current >= questions.length) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <button onClick={save}>{isSubmitting ? "Saving..." : "Finish"}</button>
-      </div>
-    );
-  }
-
-  const q = questions[current];
-
-  return (
-    <div className="h-screen flex flex-col items-center justify-center">
-      <img src={`/images/q${q.id}.png`} className="mb-6" />
-
-      <div className="grid grid-cols-6 gap-4">
-        {generateOptions(q.id).map((opt, i) => (
-          <div key={i} className="relative">
-            <img
-              src={opt}
-              onClick={() => handleAnswer(i)}
-              className={`w-24 h-24
-                ${selectedIndex === i ? "ring-8 ring-cyan-400" : ""}
-                ${autoAnswered && aiAnswerIndex === i ? "ring-8 ring-red-600" : ""}
-              `}
-            />
-
-            {/* 用户 */}
-            {selectedIndex === i && (
-              <div
-                className={`absolute inset-0 flex items-center justify-center rounded
-                  ${isCorrectSelection ? "bg-green-500/20" : "bg-red-500/20"}
-                `}
-              >
-                {isCorrectSelection ? (
-                  <span className="text-green-500 text-5xl">✓</span>
-                ) : (
-                  <span className="text-red-500 text-5xl">✕</span>
-                )}
-              </div>
-            )}
-
-            {/* AI */}
-            {aiAnswerIndex === i && (
-              <div
-                className={`absolute inset-0 flex items-center justify-center rounded
-                  ${i === q.correct ? "bg-green-500/20" : "bg-red-500/20"}
-                `}
-              >
-                {i === q.correct ? (
-                  <span className="text-green-500 text-5xl">✓</span>
-                ) : (
-                  <span className="text-red-500 text-5xl">✕</span>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <div />; 
 }
