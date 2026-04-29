@@ -477,7 +477,7 @@ export default function Home() {
                 upper right corner shows the countdown timer and both scores.
               </p>
               <p>
-                A green check mark indicates a correct answer, and a red cross mark indicates an incorrect answer.
+                Immediate feedback is provided after each selection: a green check mark indicates a correct answer, and a red cross indicates an incorrect one.
                 The AI agent’s responses and feedback will also be visible on the same screen.
               </p>
               <p>Your final score will be compared with the AI’s score. Please solve as many problems as you can.</p>
