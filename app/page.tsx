@@ -25,7 +25,7 @@ const QUESTION_TIME_LIMIT = 30;
 
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
 const GOOGLE_APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyEb4x2mOslt3fDEO3xGTub5CVE8FoyIGxXpaYeqROnf8eKO7C-Ml9Ibyo_yw9JQhUBgA/exec";
+  "https://script.google.com/macros/s/AKfycbyG7z0zcK0LsHDvNc0B4BMx8QS1Dl9TRaHc9WA8Xj_A8DNtB6ar6IU6TEia9DwIY0di7g/exec";
 
 type TrialRecord = {
   rid: string;
