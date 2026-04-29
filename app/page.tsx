@@ -530,13 +530,18 @@ export default function Home() {
             AI&apos;s score: <span className="text-red-400 font-semibold">{opponentScore}</span>
           </p>
 
-          <button
-            onClick={goBackToQuestionnaire}
-            disabled={isSubmitting}
-            className="mt-8 px-8 py-3 rounded-2xl bg-white text-black font-medium hover:bg-gray-200 transition disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? "Saving..." : "Back to Questionnaire"}
-          </button>
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <div className="flex items-center gap-3 text-cyan-400">
+              <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+              <span className="text-lg font-medium tracking-wide">
+                Saving your data...
+              </span>
+            </div>
+          
+            <p className="text-sm text-gray-400">
+              Please wait, you will be redirected automatically.
+            </p>
+          </div>
         </div>
       </div>
     );
