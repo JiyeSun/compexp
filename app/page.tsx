@@ -515,6 +515,17 @@ export default function Home() {
       <div className="min-h-screen bg-black flex items-center justify-center px-6">
         <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-xl px-16 py-14 text-center">
           <h1 className="text-3xl font-semibold mb-6 tracking-wide">Experiment completed.</h1>
+          <h1 className="text-3xl font-semibold mb-6 tracking-wide">Experiment completed.</h1>
+
+          {score > opponentScore && (
+            <p className="text-5xl font-bold text-cyan-400 mb-4">YOU WIN</p>
+          )}
+          {opponentScore > score && (
+            <p className="text-5xl font-bold text-red-500 mb-4">AI WINS</p>
+          )}
+          {score === opponentScore && (
+            <p className="text-5xl font-bold text-gray-400 mb-4">TIE</p>
+          )}
 
           <p className="text-lg text-gray-300 mt-4">
             Total time:{" "}
