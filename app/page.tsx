@@ -469,12 +469,11 @@ export default function Home() {
             <div className="mt-6 space-y-2 text-lg text-white text-left pl-6">
               <p>
                 There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions
-                at the same time. 
-                The first to answer correctly earns 1 point. 
+                at the same time. The first to answer correctly earns 1 point. 
                 If you answer incorrectly, you must wait for the other side to answer before both move on to the next question.
               </p>
               <p>
-                You will have 30 seconds per question. The upper left corner shows the question number. The
+                You will have 40 seconds per question. The upper left corner shows the question number. The
                 upper right corner shows the countdown timer and both scores.
               </p>
               <p>
