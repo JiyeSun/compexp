@@ -21,7 +21,7 @@ const questions = [
 
 const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 const wrongAIQuestions = [1, 3, 4, 8, 9, 13];
-const QUESTION_TIME_LIMIT = 30;
+const QUESTION_TIME_LIMIT = 40;
 
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
 const GOOGLE_APPS_SCRIPT_URL =
