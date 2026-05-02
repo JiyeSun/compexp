@@ -20,7 +20,7 @@ const questions = [
 ];
 
 const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-const wrongAIQuestions = [1, 3, 4, 8, 9, 13];
+const wrongAIQuestions = [3, 5, 7, 9];
 const QUESTION_TIME_LIMIT = 90;
 
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
@@ -240,7 +240,7 @@ export default function Home() {
     if (!question) return;
     if (!competitiveQuestions.includes(question.id)) return;
 
-    const reactionTime = 4000 + Math.random() * 2000;
+    const reactionTime = 15000 + Math.random() * 5000;
 
     const timeout = setTimeout(() => {
       if (questionResolvedRef.current) return;
