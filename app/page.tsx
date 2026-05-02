@@ -21,7 +21,7 @@ const questions = [
 
 const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 const wrongAIQuestions = [1, 3, 4, 8, 9, 13];
-const QUESTION_TIME_LIMIT = 40;
+const QUESTION_TIME_LIMIT = 90;
 
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
 const GOOGLE_APPS_SCRIPT_URL =
@@ -473,7 +473,7 @@ export default function Home() {
                 If you answer incorrectly, you must wait for the other side to answer before both move on to the next question.
               </p>
               <p>
-                You will have 40 seconds per question. The upper left corner shows the question number. The
+                You will have 90 seconds per question. The upper left corner shows the question number. The
                 upper right corner shows the countdown timer and both scores.
               </p>
               <p>
