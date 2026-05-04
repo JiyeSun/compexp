@@ -13,14 +13,10 @@ const questions = [
   { id: 8, correct: 5 },
   { id: 9, correct: 4 },
   { id: 10, correct: 2 },
-  { id: 11, correct: 2 },
-  { id: 12, correct: 5 },
-  { id: 13, correct: 3 },
-  { id: 14, correct: 1 },
 ];
 
-const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-const wrongAIQuestions = [3, 5, 7, 9, 13];
+const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const wrongAIQuestions = [3, 5, 7, 9];
 const QUESTION_TIME_LIMIT = 90;
 const aiTaunts = ["I got that one.", "Too slow!", "One step ahead.", "Gotcha!", "Mine."];
 const aiEncouragements = ["Next one’s mine.", "Watch me next!", "I’m not letting you win that easily.", "Just wait!", "I’m winning next."];
@@ -85,6 +81,8 @@ export default function Home() {
   const aiFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoReturnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const usedTauntsRef = useRef<string[]>([]);
+  const usedEncouragementsRef = useRef<string[]>([]);
 
   const questionResolvedRef = useRef(false);
   const inputLockedRef = useRef(false);
@@ -120,6 +118,25 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [started, experimentStartTime, current]);
+
+  function getRandomMessage(
+    pool: string[],
+    usedRef: React.MutableRefObject<string[]>
+  ) {
+    // 剩余可用
+    let available = pool.filter(msg => !usedRef.current.includes(msg));
+  
+    // 用完就重置（否则会空）
+    if (available.length === 0) {
+      usedRef.current = [];
+      available = pool;
+    }
+  
+    const msg = available[Math.floor(Math.random() * available.length)];
+  
+    usedRef.current.push(msg);
+    return msg;
+  }
 
   function clearTimer(ref: TimerRef) {
     if (ref.current) {
@@ -282,7 +299,10 @@ export default function Home() {
       }
       
       aiCorrectRef.current = true;
-      showAIMessage(aiTaunts[Math.floor(Math.random() * aiTaunts.length)]);
+      if (Math.random() < 0.5) {
+        const msg = getRandomMessage(aiTaunts, usedTauntsRef);
+        showAIMessage(msg);
+      }
       setAiAnswerIndex(question.correct);
       setOpponentScore((prev) => prev + 1);
       setAutoAnswered(true);
@@ -432,7 +452,10 @@ export default function Home() {
     if (isCorrect) {
       setScore((prev) => prev + 1);
       setShowWrongMark(false);
-      showAIMessage(aiEncouragements[Math.floor(Math.random() * aiEncouragements.length)]);
+      if (Math.random() < 0.5) {
+        const msg = getRandomMessage(aiEncouragements, usedEncouragementsRef);
+        showAIMessage(msg);
+      }
 
       questionResolvedRef.current = true;
       inputLockedRef.current = true;
