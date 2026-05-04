@@ -19,7 +19,6 @@ const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const wrongAIQuestions = [3, 5, 7, 9];
 const QUESTION_TIME_LIMIT = 90;
 const aiTaunts = ["I got that one~", "Too slow!", "One step ahead~", "Gotcha~", "Mine!"];
-const aiEncouragements = ["Nice one!", "Good catch.", "Well played.", "Sharp!", "You got it~"];
 
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
 const GOOGLE_APPS_SCRIPT_URL =
@@ -428,7 +427,6 @@ export default function Home() {
     if (isCorrect) {
       setScore((prev) => prev + 1);
       setShowWrongMark(false);
-      showAIMessage(aiEncouragements[Math.floor(Math.random() * aiEncouragements.length)]);
 
       questionResolvedRef.current = true;
       inputLockedRef.current = true;
