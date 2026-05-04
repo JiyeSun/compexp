@@ -19,8 +19,8 @@ const questions = [
   { id: 14, correct: 1 },
 ];
 
-const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-const wrongAIQuestions = [3, 5, 7, 9];
+const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+const wrongAIQuestions = [3, 5, 7, 9, 13];
 const QUESTION_TIME_LIMIT = 90;
 const aiTaunts = ["I got that one.", "Too slow!", "One step ahead.", "Gotcha!", "Mine."];
 const aiEncouragements = ["Next one’s mine.", "Watch me next!", "I’m not letting you win that easily.", "Just wait!", "I’m winning next."];
