@@ -474,8 +474,8 @@ export default function Home() {
   
           <div className="flex flex-col gap-6">
             {[
-              { n: "01", text: "There will be 10 matrix reasoning problems. You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point." },
-              { n: "02", text: "If you answer incorrectly, you must wait for the other side to answer before both move on to the next question. You have 90 seconds per question." },
+              { n: "01", text: "There will be 10 matrix reasoning problems. You will have 90 seconds for each question." },
+              { n: "02", text: "You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point. If you answer incorrectly, you must wait for the other side to answer before both move on to the next question." },
               { n: "03", text: "The upper-left shows the question number. The upper-right shows the countdown timer and both scores." },
               { n: "04", text: "Immediate feedback is provided after each selection: a green check mark indicates correct, a red cross indicates incorrect. The AI's responses are also visible on screen." },
               { n: "05", text: "Your final score will be compared with the AI's score. Please solve as many problems as you can." },
