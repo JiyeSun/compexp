@@ -527,6 +527,34 @@ export default function Home() {
   }
 
   if (current >= questions.length) {
+    useEffect(() => {
+      if (score <= opponentScore) return;
+    
+      const duration = 3000;
+      const end = Date.now() + duration;
+    
+      const frame = () => {
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ["#00ffff", "#ffffff", "#00bcd4"],
+        });
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ["#00ffff", "#ffffff", "#00bcd4"],
+        });
+    
+        if (Date.now() < end) requestAnimationFrame(frame);
+      };
+    
+      frame();
+    }, []);
+    
     const minutes = Math.floor(totalTime / 60);
     const seconds = totalTime % 60;
   
