@@ -679,7 +679,7 @@ export default function Home() {
           <img
             src="/images/bot.png"
             alt="AI"
-            className="w-10 h-10 rounded-full bg-white border-2 border-red-500 shrink-0"
+            className="w-10 h-10 rounded-full object-cover shrink-0 opacity-90"
           />
       
           <span className="text-cyan-400">{aiMessage}</span>
