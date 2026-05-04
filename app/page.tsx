@@ -672,7 +672,9 @@ export default function Home() {
         ))}
       </div>
       {aiMessage && (
-        <div className="absolute z-50 bottom-10 left-1/2 -translate-x-1/2 
+        <div className="absolute z-50 
+                        left-1/4 top-1/2 -translate-y-1/2
+                        flex items-center gap-3 whitespace-nowrap
                         flex items-center gap-3 whitespace-nowrap
                         bg-black/90 px-5 py-3 rounded-2xl border border-cyan-400">
       
