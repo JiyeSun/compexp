@@ -94,7 +94,16 @@ export default function Home() {
   const currentTrialRef = useRef<TrialRecord | null>(null);
   const currentTrialCommittedRef = useRef(false);
   const saveLockRef = useRef(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  useEffect(() => {
+    if (started || showCover) return;
+    const timer = setTimeout(() => {
+      videoRef.current?.play();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [started, showCover]);
+    
   useEffect(() => {
     if (!started || current >= questions.length) return;
 
@@ -459,48 +468,49 @@ export default function Home() {
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-6">
-        <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-2xl p-12 text-center">
-          <div className="text-center">
-            <div className="text-4xl font-bold mb-4">
-              <p>RULES</p>
-            </div>
-
-            <div className="mt-6 space-y-2 text-lg text-white text-left pl-6">
-              <p>
-                There will be 14 matrix reasoning problems. You and an AI agent will answer the same questions
-                at the same time. The first to answer correctly earns 1 point. 
-                If you answer incorrectly, you must wait for the other side to answer before both move on to the next question.
-              </p>
-              <p>
-                You will have 90 seconds per question. The upper left corner shows the question number. The
-                upper right corner shows the countdown timer and both scores.
-              </p>
-              <p>
-                Immediate feedback is provided after each selection: a green check mark indicates a correct answer, and a red cross indicates an incorrect one.
-                The AI agent’s responses and feedback will also be visible on the same screen.
-              </p>
-              <p>Your final score will be compared with the AI’s score. Please solve as many problems as you can.</p>
-            </div>
+      <div className="h-screen bg-black flex items-center justify-center px-16 gap-16">
+        <div className="w-2/5 flex flex-col gap-10">
+          <h1 className="text-3xl font-bold tracking-[0.3em] text-white">INSTRUCTIONS</h1>
+  
+          <div className="flex flex-col gap-6">
+            {[
+              { n: "01", text: "There will be 10 matrix reasoning problems. You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point." },
+              { n: "02", text: "If you answer incorrectly, you must wait for the other side to answer before both move on to the next question. You have 90 seconds per question." },
+              { n: "03", text: "The upper-left shows the question number. The upper-right shows the countdown timer and both scores." },
+              { n: "04", text: "Immediate feedback is provided after each selection: a green check mark indicates correct, a red cross indicates incorrect. The AI's responses are also visible on screen." },
+              { n: "05", text: "Your final score will be compared with the AI's score. Please solve as many problems as you can." },
+            ].map(({ n, text }) => (
+              <div key={n} className="flex gap-5 items-start">
+                <span className="text-cyan-400 font-bold text-sm tracking-widest pt-0.5 w-6 shrink-0">{n}</span>
+                <p className="text-gray-300 leading-relaxed text-sm">{text}</p>
+              </div>
+            ))}
           </div>
-
-          <div className="flex flex-col items-center justify-center mt-6">
-            {!showStartButton && (
-              <p className="text-gray-500 animate-pulse mb-4 text-lg tracking-wide">Preparing challenge...</p>
-            )}
-
+  
+          <div className="flex flex-col items-start gap-3">
+            {!showStartButton && <p className="text-gray-600 animate-pulse text-xs tracking-widest">PREPARING...</p>}
             {showStartButton && (
               <button
                 onClick={() => {
                   setStarted(true);
                   setExperimentStartTime(Date.now());
                 }}
-                className="px-10 py-4 bg-black/80 backdrop-blur-md text-cyan-400 rounded-2xl border border-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.3)] tracking-widest text-lg hover:bg-cyan-400 hover:text-black hover:shadow-[0_0_25px_rgba(0,255,255,0.8)] hover:scale-105 active:scale-95 transition-all duration-300"
+                className="px-10 py-4 bg-black/80 backdrop-blur-md text-cyan-400 rounded-2xl border border-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.3)] tracking-widest text-lg hover:bg-cyan-400 hover:text-black transition-all duration-300"
               >
                 READY!
               </button>
             )}
           </div>
+        </div>
+  
+        <div className="w-3/5 flex items-center justify-center">
+          <video
+            ref={videoRef}
+            src="/videos/rules.mp4"
+            controls
+            style={{ maxHeight: "75vh", maxWidth: "100%", width: "auto", height: "auto" }}
+            className="rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)]"
+          />
         </div>
       </div>
     );
@@ -509,56 +519,88 @@ export default function Home() {
   if (current >= questions.length) {
     const minutes = Math.floor(totalTime / 60);
     const seconds = totalTime % 60;
-
+  
+    const isWin = score > opponentScore;
+    const isLose = opponentScore > score;
+    const isTie = score === opponentScore;
+  
+    const bgGlow = isWin
+      ? "radial-gradient(ellipse at center, rgba(0,255,255,0.12) 0%, black 65%)"
+      : isLose
+      ? "radial-gradient(ellipse at center, rgba(255,50,50,0.12) 0%, black 65%)"
+      : "radial-gradient(ellipse at center, rgba(150,150,150,0.1) 0%, black 65%)";
+  
+    const borderColor = isWin
+      ? "border-cyan-400 shadow-[0_0_40px_rgba(0,255,255,0.2)]"
+      : isLose
+      ? "border-red-500 shadow-[0_0_40px_rgba(255,50,50,0.2)]"
+      : "border-gray-500 shadow-[0_0_40px_rgba(150,150,150,0.15)]";
+  
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-6">
-        <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-xl px-16 py-14 text-center">
-          <h1 className="text-3xl font-semibold mb-6 tracking-wide">Experiment completed.</h1>
-          {score > opponentScore && (
-            <div className="mb-4">
-              <p className="text-5xl font-black tracking-widest text-cyan-400 drop-shadow-[0_0_20px_rgba(0,255,255,0.8)] animate-pulse">
+      <div
+        className="min-h-screen flex items-center justify-center px-6"
+        style={{ background: bgGlow }}
+      >
+        <div className={`bg-black/70 backdrop-blur-xl border text-white rounded-3xl max-w-xl w-full px-16 py-14 text-center ${borderColor}`}>
+          
+          {/* 结果标题 */}
+          {isWin && (
+            <div className="mb-8">
+              <p className="text-6xl font-black tracking-widest text-cyan-400 drop-shadow-[0_0_30px_rgba(0,255,255,0.8)] animate-pulse">
                 YOU WIN
               </p>
-              <p className="text-lg text-gray-300 mt-2">Congratulations! You outperformed the AI.</p>
+              <p className="text-gray-400 text-sm mt-2 tracking-wide">You outperformed the AI.</p>
             </div>
           )}
-          {opponentScore > score && (
-            <p className="text-5xl font-black tracking-widest text-red-500 mb-4 drop-shadow-[0_0_20px_rgba(255,0,0,0.8)] animate-pulse">
-              AI WINS
-            </p>
+          {isLose && (
+            <div className="mb-8">
+              <p className="text-6xl font-black tracking-widest text-red-500 drop-shadow-[0_0_30px_rgba(255,50,50,0.8)] animate-pulse">
+                AI WINS
+              </p>
+              <p className="text-gray-400 text-sm mt-2 tracking-wide">Better luck next time.</p>
+            </div>
           )}
-          {score === opponentScore && (
-            <p className="text-5xl font-black tracking-widest text-gray-400 mb-4">
-              TIE
-            </p>
+          {isTie && (
+            <div className="mb-8">
+              <p className="text-6xl font-black tracking-widest text-gray-400">
+                TIE
+              </p>
+              <p className="text-gray-500 text-sm mt-2 tracking-wide">Evenly matched.</p>
+            </div>
           )}
-
-          <p className="text-lg text-gray-300 mt-4">
+  
+          {/* 分数对比 */}
+          <div className="flex items-center justify-center gap-8 mb-8">
+            <div className="text-center">
+              <p className="text-xs tracking-widest text-cyan-400 mb-1">YOU</p>
+              <p className={`font-black ${isWin ? "text-6xl text-cyan-400" : "text-5xl text-white"}`}>
+                {score}
+              </p>
+            </div>
+            <p className="text-gray-600 text-2xl font-light">vs</p>
+            <div className="text-center">
+              <p className="text-xs tracking-widest text-red-400 mb-1">AI</p>
+              <p className={`font-black ${isLose ? "text-6xl text-red-500" : "text-5xl text-white"}`}>
+                {opponentScore}
+              </p>
+            </div>
+          </div>
+  
+          {/* 时间 */}
+          <p className="text-sm text-gray-500">
             Total time:{" "}
-            <span className="text-cyan-400 font-semibold">
+            <span className="text-gray-300 font-medium">
               {minutes}m {seconds}s
             </span>
           </p>
-
-          <p className="text-xl text-gray-300">
-            Your score: <span className="text-cyan-400 font-semibold">{score}</span>
-          </p>
-
-          <p className="text-xl text-gray-300">
-            AI&apos;s score: <span className="text-red-400 font-semibold">{opponentScore}</span>
-          </p>
-
-          <div className="mt-8 flex flex-col items-center gap-4">
+  
+          {/* 保存中 */}
+          <div className="mt-8 flex flex-col items-center gap-3">
             <div className="flex items-center gap-3 text-cyan-400">
-              <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-              <span className="text-lg font-medium tracking-wide">
-                Saving your data...
-              </span>
+              <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-medium tracking-wide">Saving your data...</span>
             </div>
-          
-            <p className="text-sm text-gray-400">
-              Please wait, you will be redirected automatically.
-            </p>
+            <p className="text-xs text-gray-600">Please wait, you will be redirected automatically.</p>
           </div>
         </div>
       </div>
