@@ -18,6 +18,10 @@ const questions = [
 const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const wrongAIQuestions = [3, 5, 7, 9];
 const QUESTION_TIME_LIMIT = 90;
+const aiTaunts = ["I got that one~", "Too slow!", "One step ahead~", "Gotcha~", "Mine!"];
+const aiEncouragements = ["Nice one!", "Good catch.", "Well played.", "Sharp!", "You got it~"];
+const [aiMessage, setAiMessage] = useState<string | null>(null);
+const aiMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
 const GOOGLE_APPS_SCRIPT_URL =
@@ -271,8 +275,9 @@ export default function Home() {
         inputLockedRef.current = false;
         return;
       }
-
+      
       aiCorrectRef.current = true;
+      showAIMessage(aiTaunts[Math.floor(Math.random() * aiTaunts.length)]);
       setAiAnswerIndex(question.correct);
       setOpponentScore((prev) => prev + 1);
       setAutoAnswered(true);
@@ -396,7 +401,13 @@ export default function Home() {
   function goBackToQuestionnaire() {
     void saveAndReturnToQualtrics();
   }
-
+  
+  function showAIMessage(msg: string) {
+    if (aiMessageTimerRef.current) clearTimeout(aiMessageTimerRef.current);
+    setAiMessage(msg);
+    aiMessageTimerRef.current = setTimeout(() => setAiMessage(null), 2500);
+  }
+  
   function handleAnswer(index: number) {
     const question = questions[current];
     if (!question) return;
@@ -416,6 +427,7 @@ export default function Home() {
     if (isCorrect) {
       setScore((prev) => prev + 1);
       setShowWrongMark(false);
+      showAIMessage(aiEncouragements[Math.floor(Math.random() * aiEncouragements.length)]);
 
       questionResolvedRef.current = true;
       inputLockedRef.current = true;
@@ -655,6 +667,11 @@ export default function Home() {
           </div>
         ))}
       </div>
+      {aiMessage && (
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/90 border border-cyan-400/40 text-cyan-400 px-6 py-3 rounded-2xl text-sm tracking-wide shadow-[0_0_20px_rgba(0,255,255,0.15)] transition-all duration-300">
+          {aiMessage}
+        </div>
+      )}
     </div>
   );
 }
