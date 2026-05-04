@@ -672,15 +672,17 @@ export default function Home() {
         ))}
       </div>
       {aiMessage && (
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/90 border border-cyan-400/40 text-cyan-400 px-6 py-3 rounded-2xl text-sm tracking-wide shadow-[0_0_20px_rgba(0,255,255,0.15)] transition-all duration-300">
-              {/* 左侧头像 */}
+        <div className="absolute z-50 bottom-10 left-1/2 -translate-x-1/2 
+                        flex items-center gap-3 whitespace-nowrap
+                        bg-black/90 px-5 py-3 rounded-2xl border border-cyan-400">
+      
           <img
             src="/images/bot.png"
             alt="AI"
-            className="w-8 h-8 rounded-full object-cover border border-cyan-400/50"
+            className="w-10 h-10 rounded-full bg-white border-2 border-red-500 shrink-0"
           />
-          {/* 文本 */}
-          <span>{aiMessage}</span>
+      
+          <span className="text-cyan-400">{aiMessage}</span>
         </div>
       )}
     </div>
