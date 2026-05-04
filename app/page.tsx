@@ -6,13 +6,13 @@ const questions = [
   { id: 1, correct: 1 },
   { id: 2, correct: 3 },
   { id: 3, correct: 4 },
-  { id: 4, correct: 5 },
+  { id: 4, correct: 3 },
   { id: 5, correct: 3 },
-  { id: 6, correct: 3 },
-  { id: 7, correct: 0 },
+  { id: 6, correct: 0 },
+  { id: 7, correct: 5 },
   { id: 8, correct: 5 },
-  { id: 9, correct: 5 },
-  { id: 10, correct: 4 },
+  { id: 9, correct: 4 },
+  { id: 10, correct: 2 },
 ];
 
 const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
