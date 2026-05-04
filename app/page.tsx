@@ -470,7 +470,7 @@ export default function Home() {
     return (
       <div className="h-screen bg-black flex items-center justify-center px-16 gap-16">
         <div className="w-2/5 flex flex-col gap-10">
-          <h1 className="text-3xl font-bold tracking-[0.3em] text-white">INSTRUCTIONS</h1>
+          <h1 className="text-3xl font-bold tracking-wide text-white">INSTRUCTIONS</h1>
   
           <div className="flex flex-col gap-6">
             {[
@@ -520,87 +520,50 @@ export default function Home() {
     const minutes = Math.floor(totalTime / 60);
     const seconds = totalTime % 60;
   
-    const isWin = score > opponentScore;
-    const isLose = opponentScore > score;
-    const isTie = score === opponentScore;
-  
-    const bgGlow = isWin
-      ? "radial-gradient(ellipse at center, rgba(0,255,255,0.12) 0%, black 65%)"
-      : isLose
-      ? "radial-gradient(ellipse at center, rgba(255,50,50,0.12) 0%, black 65%)"
-      : "radial-gradient(ellipse at center, rgba(150,150,150,0.1) 0%, black 65%)";
-  
-    const borderColor = isWin
-      ? "border-cyan-400 shadow-[0_0_40px_rgba(0,255,255,0.2)]"
-      : isLose
-      ? "border-red-500 shadow-[0_0_40px_rgba(255,50,50,0.2)]"
-      : "border-gray-500 shadow-[0_0_40px_rgba(150,150,150,0.15)]";
-  
     return (
-      <div
-        className="min-h-screen flex items-center justify-center px-6"
-        style={{ background: bgGlow }}
-      >
-        <div className={`bg-black/70 backdrop-blur-xl border text-white rounded-3xl max-w-xl w-full px-16 py-14 text-center ${borderColor}`}>
-          
-          {/* 结果标题 */}
-          {isWin && (
-            <div className="mb-8">
-              <p className="text-6xl font-black tracking-widest text-cyan-400 drop-shadow-[0_0_30px_rgba(0,255,255,0.8)] animate-pulse">
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="bg-black/70 backdrop-blur-xl border border-cyan-400 text-white rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.2)] max-w-xl px-16 py-14 text-center">
+          <h1 className="text-3xl font-semibold mb-6 tracking-wide">Experiment completed.</h1>
+          {score > opponentScore && (
+            <div className="mb-4">
+              <p className="text-5xl font-black tracking-widest text-cyan-400 drop-shadow-[0_0_20px_rgba(0,255,255,0.8)] animate-pulse">
                 YOU WIN
               </p>
-              <p className="text-gray-400 text-sm mt-2 tracking-wide">You outperformed the AI.</p>
+              <p className="text-lg text-gray-300 mt-2">Congratulations! You outperformed the AI.</p>
             </div>
           )}
-          {isLose && (
-            <div className="mb-8">
-              <p className="text-6xl font-black tracking-widest text-red-500 drop-shadow-[0_0_30px_rgba(255,50,50,0.8)] animate-pulse">
-                AI WINS
-              </p>
-              <p className="text-gray-400 text-sm mt-2 tracking-wide">Better luck next time.</p>
-            </div>
+          {opponentScore > score && (
+            <p className="text-5xl font-black tracking-widest text-red-500 mb-4 drop-shadow-[0_0_20px_rgba(255,0,0,0.8)] animate-pulse">
+              AI WINS
+            </p>
           )}
-          {isTie && (
-            <div className="mb-8">
-              <p className="text-6xl font-black tracking-widest text-gray-400">
-                TIE
-              </p>
-              <p className="text-gray-500 text-sm mt-2 tracking-wide">Evenly matched.</p>
-            </div>
+          {score === opponentScore && (
+            <p className="text-5xl font-black tracking-widest text-gray-400 mb-4">
+              TIE
+            </p>
           )}
   
-          {/* 分数对比 */}
-          <div className="flex items-center justify-center gap-8 mb-8">
-            <div className="text-center">
-              <p className="text-xs tracking-widest text-cyan-400 mb-1">YOU</p>
-              <p className={`font-black ${isWin ? "text-6xl text-cyan-400" : "text-5xl text-white"}`}>
-                {score}
-              </p>
-            </div>
-            <p className="text-gray-600 text-2xl font-light">vs</p>
-            <div className="text-center">
-              <p className="text-xs tracking-widest text-red-400 mb-1">AI</p>
-              <p className={`font-black ${isLose ? "text-6xl text-red-500" : "text-5xl text-white"}`}>
-                {opponentScore}
-              </p>
-            </div>
-          </div>
-  
-          {/* 时间 */}
-          <p className="text-sm text-gray-500">
+          <p className="text-lg text-gray-300 mt-4">
             Total time:{" "}
-            <span className="text-gray-300 font-medium">
+            <span className="text-cyan-400 font-semibold">
               {minutes}m {seconds}s
             </span>
           </p>
   
-          {/* 保存中 */}
-          <div className="mt-8 flex flex-col items-center gap-3">
+          <p className="text-xl text-gray-300">
+            Your score: <span className="text-cyan-400 font-semibold">{score}</span>
+          </p>
+  
+          <p className="text-xl text-gray-300">
+            AI&apos;s score: <span className="text-red-400 font-semibold">{opponentScore}</span>
+          </p>
+  
+          <div className="mt-8 flex flex-col items-center gap-4">
             <div className="flex items-center gap-3 text-cyan-400">
-              <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm font-medium tracking-wide">Saving your data...</span>
+              <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+              <span className="text-lg font-medium tracking-wide">Saving your data...</span>
             </div>
-            <p className="text-xs text-gray-600">Please wait, you will be redirected automatically.</p>
+            <p className="text-sm text-gray-400">Please wait, you will be redirected automatically.</p>
           </div>
         </div>
       </div>
