@@ -538,7 +538,6 @@ export default function Home() {
               <p className="text-5xl font-black tracking-widest text-cyan-400 drop-shadow-[0_0_20px_rgba(0,255,255,0.8)] animate-pulse">
                 YOU WIN
               </p>
-              <p className="text-lg text-gray-300 mt-2">Congratulations! You outperformed the AI.</p>
             </div>
           )}
           {opponentScore > score && (
