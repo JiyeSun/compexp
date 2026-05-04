@@ -13,6 +13,10 @@ const questions = [
   { id: 8, correct: 5 },
   { id: 9, correct: 4 },
   { id: 10, correct: 2 },
+  { id: 11, correct: 2 },
+  { id: 12, correct: 5 },
+  { id: 13, correct: 3 },
+  { id: 14, correct: 1 },
 ];
 
 const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
