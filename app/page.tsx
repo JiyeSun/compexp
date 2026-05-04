@@ -197,6 +197,22 @@ export default function Home() {
       advanceQuestion();
     }, delayMs);
   }
+  
+  useEffect(() => {
+  if (current < questions.length) return;
+  if (score <= opponentScore) return;
+  import("canvas-confetti").then((mod) => {
+    const confetti = mod.default;
+    const duration = 3000;
+    const end = Date.now() + duration;
+    const frame = () => {
+      confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 } });
+      confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 } });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    };
+    frame();
+  });
+}, [current, score, opponentScore]);
 
   useEffect(() => {
     if (!started || current >= questions.length) return;
@@ -231,6 +247,8 @@ export default function Home() {
       clearAllTimers();
     };
   }, [started, current]);
+
+
 
   useEffect(() => {
     if (!started || current >= questions.length) return;
