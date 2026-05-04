@@ -20,8 +20,6 @@ const wrongAIQuestions = [3, 5, 7, 9];
 const QUESTION_TIME_LIMIT = 90;
 const aiTaunts = ["I got that one~", "Too slow!", "One step ahead~", "Gotcha~", "Mine!"];
 const aiEncouragements = ["Nice one!", "Good catch.", "Well played.", "Sharp!", "You got it~"];
-const [aiMessage, setAiMessage] = useState<string | null>(null);
-const aiMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 const QUALTRICS_RETURN_URL = "https://iu.co1.qualtrics.com/jfe/form/SV_2tvhb3IQU4w77Om";
 const GOOGLE_APPS_SCRIPT_URL =
@@ -69,6 +67,9 @@ export default function Home() {
   const [showStartButton, setShowStartButton] = useState(false);
   const [autoAnswered, setAutoAnswered] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+  const aiMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [rid] = useState<string>(() => {
     if (typeof window === "undefined") return "";
