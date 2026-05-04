@@ -673,7 +673,14 @@ export default function Home() {
       </div>
       {aiMessage && (
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/90 border border-cyan-400/40 text-cyan-400 px-6 py-3 rounded-2xl text-sm tracking-wide shadow-[0_0_20px_rgba(0,255,255,0.15)] transition-all duration-300">
-          {aiMessage}
+              {/* 左侧头像 */}
+          <img
+            src="/images/bot.png"
+            alt="AI"
+            className="w-8 h-8 rounded-full object-cover border border-cyan-400/50"
+          />
+          {/* 文本 */}
+          <span>{aiMessage}</span>
         </div>
       )}
     </div>
