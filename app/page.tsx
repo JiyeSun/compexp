@@ -13,13 +13,9 @@ const questions = [
   { id: 8, correct: 5 },
   { id: 9, correct: 5 },
   { id: 10, correct: 4 },
-  { id: 11, correct: 2 },
-  { id: 12, correct: 5 },
-  { id: 13, correct: 3 },
-  { id: 14, correct: 1 },
 ];
 
-const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const wrongAIQuestions = [3, 5, 7, 9];
 const QUESTION_TIME_LIMIT = 90;
 
