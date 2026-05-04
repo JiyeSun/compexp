@@ -197,22 +197,6 @@ export default function Home() {
       advanceQuestion();
     }, delayMs);
   }
-  
-  useEffect(() => {
-  if (current < questions.length) return;
-  if (score <= opponentScore) return;
-  import("canvas-confetti").then((mod) => {
-    const confetti = mod.default;
-    const duration = 3000;
-    const end = Date.now() + duration;
-    const frame = () => {
-      confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 } });
-      confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 } });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    };
-    frame();
-  });
-}, [current, score, opponentScore]);
 
   useEffect(() => {
     if (!started || current >= questions.length) return;
@@ -247,8 +231,6 @@ export default function Home() {
       clearAllTimers();
     };
   }, [started, current]);
-
-
 
   useEffect(() => {
     if (!started || current >= questions.length) return;
@@ -416,38 +398,7 @@ export default function Home() {
       }
     };
   }, [current, started]);
-  useEffect(() => {
-    if (current < questions.length) return;
-    if (score <= opponentScore) return;
-  
-    import("canvas-confetti").then((mod) => {
-      const confetti = mod.default;
-      const duration = 3000;
-      const end = Date.now() + duration;
-  
-      const frame = () => {
-        confetti({
-          particleCount: 3,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: ["#00ffff", "#ffffff", "#00bcd4"],
-        });
-        confetti({
-          particleCount: 3,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ["#00ffff", "#ffffff", "#00bcd4"],
-        });
-  
-        if (Date.now() < end) requestAnimationFrame(frame);
-      };
-  
-      frame();
-    });
-  }, [current, score, opponentScore]);
-  
+
   function goBackToQuestionnaire() {
     void saveAndReturnToQualtrics();
   }
@@ -572,7 +523,9 @@ export default function Home() {
         </div>
       </div>
     );
-  }    
+  }
+
+  if (current >= questions.length) {
     const minutes = Math.floor(totalTime / 60);
     const seconds = totalTime % 60;
   
