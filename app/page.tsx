@@ -510,11 +510,11 @@ export default function Home() {
   
           <div className="flex flex-col gap-6">
             {[
-              { n: "01", text: "There will be 10 matrix reasoning problems. You will have 90 seconds for each question." },
+              { n: "01", text: "There are 10 matrix reasoning problems. You will have 90 seconds for each question." },
               { n: "02", text: "You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point. If you answer incorrectly, you must wait for the other side to answer before both move on to the next question." },
               { n: "03", text: "The upper-left shows the question number. The upper-right shows the countdown timer and both scores." },
-              { n: "04", text: "Immediate feedback is provided after each selection: a green check mark indicates correct, a red cross indicates incorrect. The AI's responses are also visible on screen." },
-              { n: "05", text: "Your final score will be compared with the AI's score. Please solve as many problems as you can." },
+              { n: "04", text: "After each question is answered, a green check will appear if the answer was correct and a red X will appear if an answer is incorrect. The AI's responses are also visible on screen." },
+              { n: "05", text: "Your final score will be compared to the AI’s-try to solve as many problems as you can." },
             ].map(({ n, text }) => (
               <div key={n} className="flex gap-5 items-start">
                 <span className="text-cyan-400 font-bold text-sm tracking-widest pt-0.5 w-6 shrink-0">{n}</span>
