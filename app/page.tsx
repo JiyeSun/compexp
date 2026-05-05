@@ -512,7 +512,7 @@ export default function Home() {
             {[
               { n: "01", text: "There are 10 matrix reasoning problems. You will have 90 seconds for each question." },
               { n: "02", text: "You and an AI agent will answer the same questions at the same time. The first to answer correctly earns 1 point. If you answer incorrectly, you must wait for the other side to answer before both move on to the next question." },
-              { n: "03", text: "The upper-left shows the question number. The upper-right shows the countdown timer and both scores." },
+              { n: "03", text: "The question number appears in the top-left corner, and the countdown timer and both scores appear in the top-right corner." },
               { n: "04", text: "After each question is answered, a green check will appear if the answer was correct and a red X will appear if an answer is incorrect. The AI's responses are also visible on screen." },
               { n: "05", text: "Your final score will be compared to the AI’s-try to solve as many problems as you can." },
             ].map(({ n, text }) => (
