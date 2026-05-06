@@ -16,7 +16,7 @@ const questions = [
 ];
 
 const competitiveQuestions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-const wrongAIQuestions = [3, 5, 7, 9];
+const wrongAIQuestions = [3, 7, 9];
 const QUESTION_TIME_LIMIT = 90;
 const aiTaunts = ["I got that one.", "You missed it!", "One step ahead.", "That was obvious.", "Mine."];
 const aiEncouragements = ["Next one’s mine.", "Watch me next!", "I’m not letting you win that easily.", "Just wait!", "I’m winning next."];
@@ -271,7 +271,7 @@ export default function Home() {
     if (!question) return;
     if (!competitiveQuestions.includes(question.id)) return;
 
-    const reactionTime = 15000 + Math.random() * 5000;
+    const reactionTime = 13000 + Math.random() * 7000;
 
     const timeout = setTimeout(() => {
       if (questionResolvedRef.current) return;
