@@ -299,7 +299,7 @@ export default function Home() {
       }
       
       aiCorrectRef.current = true;
-      if (Math.random() < 0.3) {
+      if (Math.random() < 0.4) {
         const msg = getRandomMessage(aiTaunts, usedTauntsRef);
         showAIMessage(msg);
       }
@@ -452,7 +452,7 @@ export default function Home() {
     if (isCorrect) {
       setScore((prev) => prev + 1);
       setShowWrongMark(false);
-      if (Math.random() < 0.3) {
+      if (Math.random() < 0.4) {
         const msg = getRandomMessage(aiEncouragements, usedEncouragementsRef);
         showAIMessage(msg);
       }
@@ -696,7 +696,7 @@ export default function Home() {
       </div>
       {aiMessage && (
         <div className="absolute z-50 
-                        left-4 top-1/2 -translate-y-1/2
+                        left-8 top-1/2 -translate-y-1/2
                         flex items-center gap-3 whitespace-nowrap
                         flex items-center gap-3 whitespace-nowrap
                         bg-black/90 px-5 py-3 rounded-2xl border border-cyan-400">
