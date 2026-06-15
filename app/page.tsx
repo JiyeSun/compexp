@@ -452,7 +452,7 @@ export default function Home() {
     if (isCorrect) {
       setScore((prev) => prev + 1);
       setShowWrongMark(false);
-      if (Math.random() < 1) {
+      if (Math.random() < 0) {
         const msg = getRandomMessage(aiEncouragements, usedEncouragementsRef);
         showAIMessage(msg);
       }
