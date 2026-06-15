@@ -462,7 +462,7 @@ export default function Home() {
 
       clearTimer(countdownRef);
       commitCurrentTrial(false);
-      scheduleAdvance(1500);
+      scheduleAdvance(1000);
       return;
     }
 
