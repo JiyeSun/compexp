@@ -75,6 +75,18 @@ export default function Home() {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("rid") ?? "";
   });
+  const [prolificPid] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("PROLIFIC_PID") ?? "";
+  });
+  const [studyId] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("STUDY_ID") ?? "";
+  });
+  const [sessionId] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("SESSION_ID") ?? "";
+  });
 
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const userFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -398,7 +410,7 @@ export default function Home() {
         trials_json: JSON.stringify(trialsRef.current),
       });
 
-      window.location.href = QUALTRICS_RETURN_URL;
+      window.location.href = `${QUALTRICS_RETURN_URL}?PROLIFIC_PID=${prolificPid}&STUDY_ID=${studyId}&SESSION_ID=${sessionId}`;
     } catch (error) {
       console.error(error);
       alert("Saving data failed. Please try again.");
